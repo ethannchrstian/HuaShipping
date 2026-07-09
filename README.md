@@ -20,8 +20,8 @@ are the current deliverable; code starts only after they're reviewed.
 | `docs/01…10-*.md` | Planning documents (glossary → ERD → calc spec → … → open questions) |
 | `docs/reference/timesheets-raw.json` | Faithful dump of all real voyage sheets (ground truth for specs & oracle tests) |
 | `tools/dump_timesheets.py` | Script that produces the dump from the `.xlsx` files |
-| `Time Sheet *.xlsx` | The company's real Excel time sheets (source data) |
-| `prototype.html` | AI-generated UI mock — kept as the visual design reference only |
+| `Time Sheet *.xlsx` | The company's real time sheets — **local only, gitignored, never committed** |
+| `prototype.html` | Early throwaway mock — feature reference only, not a design reference (ADR-011) |
 
 ## Stack (decided)
 

@@ -22,11 +22,14 @@ One test module per calc-spec rule: `test_c1_duration.py` … `test_c9_units.py`
 - Property-based tests (hypothesis) for invariants: Σ block durations ≤ voyage duration; demurrage_days ≥ 0; parsing is total (any string → value or explicit error, never exception)
 
 ### L2 — Excel-as-oracle golden tests
-The real workbooks live in the repo (private). Test: parse each of the 11
-voyages → run domain calculations → assert equality with the sheets' printed
-subtotal/grand/prorata/demurrage rows, *except* the enumerated known-error rows
-(`05-import-mapping.md`), which must instead produce flags. **1.5 years of real
-history as a regression suite.**
+The real workbooks are **kept locally only, never committed** (gitignored;
+real business documents). The committed `docs/reference/timesheets-raw.json`
+carries the extracted ground truth for tests; tests needing the raw `.xlsx`
+skip with a clear message when the files are absent. Test: parse each of the
+11 voyages → run domain calculations → assert equality with the sheets'
+printed subtotal/grand/prorata/demurrage rows, *except* the enumerated
+known-error rows (`05-import-mapping.md`), which must instead produce flags.
+**1.5 years of real history as a regression suite.**
 
 ### L3 — Model & validation tests (pytest-django, DB)
 DB constraints actually reject bad data (end ≤ start raises IntegrityError;

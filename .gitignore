@@ -20,5 +20,7 @@ db.sqlite3
 Thumbs.db
 .DS_Store
 
-# Excel lock files
-~$*.xlsx
+# Source data & photos stay local — never in git (real business documents)
+*.xlsx
+*.jpeg
+*.jpg

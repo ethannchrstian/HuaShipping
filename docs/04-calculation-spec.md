@@ -16,7 +16,8 @@ differs from textbook laytime (their waiting time counts fully).
 
 - Display: `<whole days>d HH:MM` (e.g. `4d 15:00`).
 - Ongoing activity (`end_at` null): duration computed against "now", displayed with an "ongoing" marker; excluded from completed-voyage totals.
-- **Validation (block):** `end_at ≤ start_at` is rejected. Real error cases that must fail: HN1-V2604 `waiting_load` (2026-04-06 23:30 → 2026-04-06 17:20), V2501 row 15 (14:30 → 13:15 same date).
+- **Zero duration is legal** — a "no waiting" row; real case HN2-V2603 row 14 (tunggu sandar 10:55 → 10:55).
+- **Validation (block):** `end_at < start_at` is rejected. Real error cases that must fail: HN1-V2604 `waiting_load` (2026-04-06 23:30 → 2026-04-06 17:20), V2501 row 15 (14:30 → 13:15 same date).
 
 Worked example (V2601 ballast): 2026-01-04 23:30 → 2026-01-09 14:30 = **4d 15:00** ✓ matches sheet (HARI=4, WAKTU=15:00).
 

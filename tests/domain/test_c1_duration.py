@@ -34,10 +34,10 @@ class TestActivityDuration:
         with pytest.raises(ActivityEndBeforeStart):
             activity_duration(datetime(2025, 12, 14, 14, 30), datetime(2025, 12, 14, 13, 15))
 
-    def test_zero_duration_rejected(self):
-        t = datetime(2026, 1, 1, 8, 0)
-        with pytest.raises(ActivityEndBeforeStart):
-            activity_duration(t, t)
+    def test_zero_duration_allowed_real_case_hn2_v2603(self):
+        # HN2 V2603 row 14: tunggu info sandar 2026-06-17 10:55 -> 10:55 ("no waiting")
+        t = datetime(2026, 6, 17, 10, 55)
+        assert activity_duration(t, t) == timedelta(0)
 
 
 class TestFormatDuration:

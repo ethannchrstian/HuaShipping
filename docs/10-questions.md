@@ -21,6 +21,7 @@ overwhelming. Ask the top items opportunistically, not as a questionnaire.
 | 2 | Confirm the counting convention we reverse-engineered: waiting counts toward laytime, persiapan doesn't, hours truncated for demurrage days | Locks calc spec C2–C5 (currently our best inference from the sheets) | ⬜ |
 | 3 | What port/stevedoring costs exist per voyage, roughly? (stevedoring, port charges, agen, apa lagi?) | Seeds the cost-category list (ADR-010) | ⬜ |
 | 4 | Import how far back — are there workbooks older than the 2025 one? | Import scope | ⬜ |
+| 5 | **HN2 V2602's time sheet has internal errors** (a date typo creating a ~24h overlap + a day-count contradicting its own timestamps) that inflate the printed total and the 7 demurrage days derived from it — was that demurrage invoiced at 7 days? Recomputed from the timestamps it is fewer. | Found by the automated check 2026-07-10; real money (rate Rp 15 jt/hari) | ⬜ |
 
 ## Parked (ask only if the topic comes up)
 

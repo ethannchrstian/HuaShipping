@@ -65,6 +65,8 @@ Not a header field — extract from `contract_no` / `invoice_no` party segment
 | HN1-V2604 row 15 | same class: 2026-04-06 23:30 → 17:20 | same handling |
 | V2501 header | `No. Kontrak` contains an invoice number (`001/INV/HUAT-FPS/I/2026`) and it's dated 2026 on a 2025 voyage | import as-is + report line |
 | V2605, V2606 | multi-day unlogged gaps between activities | import as-is; W1 warnings will show in-app |
+| HN2-V2602 rows 16–17 | **found by the oracle test (2026-07-10):** row 17's start date is typo'd one day early (≈24h overlap with loading), and row 16's typed day-count (1) contradicts its own timestamps (18h20m) — the printed block A (7 hari) and grand total are inflated, and the **7 demurrage days derived from them are overstated** (recomputed from timestamps: fewer). | import as-is; W2 overlap warning shows in-app; raised with the company as open question |
+| HN2-V2603 row 14 | zero-duration tunggu sandar (10:55 → 10:55) | **not an error** — a legitimate "no waiting" row; C1 allows zero duration |
 | HN1-V2606 footer | free-text note "total kegiatan A + B + C adalah 17 hari 171 jam 05 menit" | ignore (verification uses the structured rows) |
 
 ## Verification step (built into the importer)

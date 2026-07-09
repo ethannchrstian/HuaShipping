@@ -1,25 +1,48 @@
 # 06 — Screen Inventory & Layout
 
-**Visual reference: `prototype.html`.** It's an AI one-shot, but the look
-(harbor-navy sidebar, card tables, status chips, passage progress line, phase
-day-boxes) is good and the family already saw it — keep that visual language.
-This doc lists the actual screens, what's on them, and where we deviate.
-No Figma; deviations are annotated here and refined in the browser during build.
+**Visual reference: `prototype.html` — for its look only, not its interactions.**
+A full UX critique (2026-07-10, scored 21/40, snapshot in
+`.impeccable/critique/`) confirmed: keep the visual language (harbor-navy,
+status chips, phase day-boxes) and the core interaction principle (computed
+numbers, prefilled start times, blame-free inline warnings); replace the
+interaction layer per the binding rules below.
 
 All UI text Bahasa Indonesia (strings from `01-glossary.md`). Responsive:
 sidebar collapses to top bar < 760px (prototype already does this).
+Strategic principles live in `PRODUCT.md`.
+
+## Binding UI rules (from the critique — every screen must comply)
+
+1. **No icon-only controls.** Every action is a labeled Indonesian text button
+   ("Ubah", "Hapus kegiatan"), target ≥44px. No emoji as icons.
+2. **No silent outcomes.** Every save shows confirmation (toast/inline);
+   every validation failure shows a field-level Indonesian message. A button
+   that does nothing is a bug.
+3. **No browser-native `confirm()`/`alert()`.** Proper dialogs in Indonesian;
+   destructive actions get soft-delete + undo where feasible.
+4. **Type scale for older users:** base 16px, tables ≥14px, no text below 12px.
+5. **Color never carries meaning alone** — pair with sign/word ("+3 hr lebih").
+6. **Keyboard operability:** voyage rows are links, sort headers are buttons,
+   dialogs trap focus and close on Esc.
+7. **One word, one meaning:** "Selesaikan kegiatan" vs "Tutup voyage" — never
+   the same verb for both.
+8. **All-Indonesian:** no "Export CSV" ("Ekspor CSV"), no mixed strings.
 
 ## S1. Masuk (login)
 Plain Django login form, company name, Indonesian labels. No self-registration —
 accounts created by admin.
 
 ## S2. Rekap voyage (home / voyage list)
-Prototype's "Rekap voyage" view, kept almost as-is:
-- KPI tiles: voyages this year, ongoing now (with current phase), total MT shipped, total demurrage days YTD
-- Filters: vessel, status, charterer, year, free-text search
-- Table: code · vessel · charterer · route (load → discharge) · start date · status chip (Berjalan + current phase / Selesai) · total days · demurrage days
-- Row click → S3. Button: **+ Voyage baru** → S4. Button: **Ekspor CSV**
-- *Deviation from prototype:* drop the mini progress bars in rows (noise); keep chips.
+Prototype's view, simplified per the critique (its 11-column table overloads
+non-technical users):
+- **Lead with two vessel status cards** ("where are my boats now"): vessel,
+  current voyage, current phase chip, days at port so far
+- KPI tiles (max 4): ongoing voyages, port days this year, demurrage days YTD, MT shipped
+- Filters: vessel, status, charterer, **year** (prototype hardcoded 2026), free-text search
+- Table, **~7 default columns**: vessel · code · charterer · route · start ·
+  port days / laytime · status chip. Waiting-% and other ratios live in S3 and
+  V2 analytics, not here. Rows are real links (keyboard-operable)
+- Buttons: **+ Voyage baru** → S4 · **Ekspor CSV**
 
 ## S3. Detail voyage
 Prototype's detail view, restructured:
@@ -38,12 +61,17 @@ jetty, laytime (combined **or** split muat/bongkar — toggle), demurrage rate,
 parcels inline (commodity/MT/jetty/shipper rows). Server-side validation per
 ERD constraints.
 
-## S5. Form kegiatan (add/edit activity)
-The most-used form — optimize hard:
+## S5. Entri kegiatan (add/edit activity) — the adoption-deciding screen
+**Not a modal.** The critique's biggest finding: the real workflow is
+transcribing a WhatsApp backlog of N timestamps, so entry must be an **inline
+add-row at the bottom of the timeline** — the log stays visible while typing
+(no working-memory bridge), and saving one row immediately opens the next with
+start prefilled. Loop: type → tab → type → Enter → next row.
 - Type select ordered by the natural sequence; **default = the type that usually follows the previous activity**
-- **Start prefilled with the previous activity's end** (the #1 data-entry accelerator; the sheets are always contiguous)
-- End optional ("masih berjalan"); date+time pickers; sailing legs reveal from/to location fields
-- On save: C1 block on end ≤ start (clear Indonesian message); W1/W2 warnings shown non-blocking
+- **Start prefilled with the previous activity's end** (the #1 accelerator; the sheets are always contiguous)
+- End optional ("masih berjalan"); sailing legs reveal from/to location fields
+- On save: block end ≤ start with a field-level Indonesian message (calc spec C1); W1/W2 warnings shown non-blocking; save confirms visibly
+- Editing an existing activity uses the same inline row swapped in place
 
 ## S6. Data master
 Three simple CRUD tabs: Kapal, Jetty, Pencharter. (Django admin can serve as

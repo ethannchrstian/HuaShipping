@@ -63,3 +63,14 @@ IDR + note; seeded categories: stevedoring, port charges, agency, bunker,
 other). `freight_idr` (revenue) and `fuel_used_liters` (operational stat) stay
 as voyage columns. **Consequence:** new cost types are data, not migrations;
 the exact category list is open question #3.
+
+## ADR-011 · 2026-07-10 · Prototype is a feature reference, not a design reference
+The AI one-shot prototype.html reads as AI-made (condensed display font in UI
+chrome, emoji icons, uppercase micro-label scaffolding, default dashboard
+grammar) and its interaction layer scored 21/40 in review. Decision: keep its
+**feature set and domain ideas** (computed numbers, prefilled entry, warnings,
+phase summaries, print sheet) and design a **new professional-grade visual
+identity from scratch** when UI work starts, via a deliberate design pass
+(DESIGN.md seeded then, not now) governed by PRODUCT.md's principles and the
+binding UI rules in docs/06. **Consequence:** no CSS is copied from
+prototype.html; it is used only to enumerate features.

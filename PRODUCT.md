@@ -23,11 +23,14 @@ are reproducible and correct. See docs/ 01–10 for full plans.
 ## Brand Personality
 
 Tenang, jelas, terpercaya (calm, clear, trustworthy). A professional back-office
-tool with a quiet maritime identity (harbor navy, starboard green). It should
-feel like well-organized paperwork, not like a startup dashboard.
+tool with a quiet maritime identity, designed from scratch at UI-build time
+(ADR-011 — the AI prototype's styling is explicitly not the reference). It
+should feel like well-organized paperwork, not like a startup dashboard.
 
 ## Anti-references
 
+- **prototype.html's styling** — condensed display font in UI chrome, emoji
+  icons, uppercase micro-label scaffolding: the AI-dashboard look (ADR-011).
 - Trading-terminal density: tiny mono numbers, 11-column tables, ratio soup.
 - Consumer-app trendiness: gradients, animations, icon-only minimalism.
 - Anything requiring discovery: hidden menus, hover-only actions, gestures.

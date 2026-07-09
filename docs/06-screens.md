@@ -1,11 +1,12 @@
 # 06 — Screen Inventory & Layout
 
-**Visual reference: `prototype.html` — for its look only, not its interactions.**
-A full UX critique (2026-07-10, scored 21/40, snapshot in
-`.impeccable/critique/`) confirmed: keep the visual language (harbor-navy,
-status chips, phase day-boxes) and the core interaction principle (computed
-numbers, prefilled start times, blame-free inline warnings); replace the
-interaction layer per the binding rules below.
+**`prototype.html` is a FEATURE reference only (ADR-011).** A full UX critique
+(2026-07-10, scored 21/40, snapshot in `.impeccable/critique/`) found its
+interaction layer thin and its styling full of AI tells. What survives from it:
+the feature set and the core interaction principle (computed numbers, prefilled
+start times, blame-free inline warnings). The real visual identity is designed
+from scratch at UI-build time (DESIGN.md seeded then), governed by PRODUCT.md
+and the binding rules below. No CSS is copied from the prototype.
 
 All UI text Bahasa Indonesia (strings from `01-glossary.md`). Responsive:
 sidebar collapses to top bar < 760px (prototype already does this).

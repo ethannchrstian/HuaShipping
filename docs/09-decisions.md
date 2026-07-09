@@ -48,3 +48,18 @@ retired after go-live (kept for reference/tests).
 ## ADR-008 · 2026-07-09 · Timestamps stored UTC, displayed WIB
 Every port in the data is UTC+7. **Consequence:** if operations ever extend to
 WITA/WIT ports, add a per-activity timezone display rule — storage unaffected.
+
+## ADR-009 · 2026-07-10 · No roles — single permission level
+The company answered: office admins only, everyone may see and edit everything.
+Per-user accounts remain (audit trail), plus a developer superuser. Guards
+against accidents are the voyage lock + history, not permissions.
+**Consequence:** no permission checks beyond login anywhere in V1; revisit only
+if the company itself asks.
+
+## ADR-010 · 2026-07-10 · Voyage costs as line items, not fixed columns
+The company asked to track "stevedoring and all that stuff". Instead of adding
+a column per cost type, V1.1 gets `VOYAGE_COST` line items (category + amount
+IDR + note; seeded categories: stevedoring, port charges, agency, bunker,
+other). `freight_idr` (revenue) and `fuel_used_liters` (operational stat) stay
+as voyage columns. **Consequence:** new cost types are data, not migrations;
+the exact category list is open question #3.

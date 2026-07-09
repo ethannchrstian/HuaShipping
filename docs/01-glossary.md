@@ -47,6 +47,9 @@ extend this file if the term is new.
 | Operasional | `operations` (role) | Admin staff role that prepares time sheets (currently Felicia) |
 | Direktur Utama | `director` (role) | Signs off; consumes recaps (currently Tjipta Lesmana Suwarto) |
 | rekap | `recap` | Summary view/report of voyages |
+| stevedoring / buruh bongkar muat | `stevedoring` | Cargo-handling labor at the jetty; a per-voyage cost category |
+| biaya | `cost` | Voyage cost line items (`voyage_cost`): stevedoring, port charges, agen, bunker… |
+| agen | `agency` | Port agency fees (cost category) |
 | Rp / IDR | `IDR` | Indonesian Rupiah; store as **integer rupiah** |
 
 ## App terms (UI strings we will need in Indonesian)

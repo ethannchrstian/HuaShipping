@@ -27,7 +27,8 @@ Prototype's detail view, restructured:
 - **Kegiatan (activity timeline)** — the centerpiece: ordered rows with type, start → end, computed duration, note; gap/overlap warnings inline (red strip, W1/W2 wording from calc spec); ongoing activity highlighted; **+ Tambah kegiatan** (S5)
 - Day summary strip: per-block totals (A/B/C…), grand total, prorata kontrak, demurrage days — sheet-style day+time pairs (calc spec C3–C5)
 - Muatan (parcels) card: commodity, MT, jetty, shipper
-- Money card (V1.1): freight, bunker, fuel, demurrage estimate
+- Money card (V1.1): freight, fuel used, **cost line items (stevedoring, port charges, agency, bunker…) with total**, demurrage estimate
+- Port-time figure ("berapa lama di port") shown prominently — explicitly requested
 - Actions: Selesaikan voyage (→ lock, W5 check), Ekspor, **Cetak time sheet** (S8, V1.1)
 
 ## S4. Form voyage (create/edit)

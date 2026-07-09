@@ -1,12 +1,13 @@
 # 06 — Screen Inventory & Layout
 
-**`prototype.html` is a FEATURE reference only (ADR-011).** A full UX critique
+**This document is the feature reference.** It supersedes the original mock
+(`prototype.html`, now local-only and gitignored — ADR-011): a UX critique
 (2026-07-10, scored 21/40, snapshot in `.impeccable/critique/`) found its
-interaction layer thin and its styling full of AI tells. What survives from it:
-the feature set and the core interaction principle (computed numbers, prefilled
-start times, blame-free inline warnings). The real visual identity is designed
-from scratch at UI-build time (DESIGN.md seeded then), governed by PRODUCT.md
-and the binding rules below. No CSS is copied from the prototype.
+interaction layer thin and its styling generic. What survives from it: the
+feature set (enumerated in the screens below) and the core interaction
+principle (computed numbers, prefilled start times, blame-free inline
+warnings). The real visual identity is designed from scratch at UI-build time
+(DESIGN.md seeded then), governed by PRODUCT.md and the binding rules below.
 
 All UI text Bahasa Indonesia (strings from `01-glossary.md`). Responsive:
 sidebar collapses to top bar < 760px (prototype already does this).

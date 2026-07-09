@@ -21,7 +21,6 @@ are the current deliverable; code starts only after they're reviewed.
 | `docs/reference/timesheets-raw.json` | Faithful dump of all real voyage sheets (ground truth for specs & oracle tests) |
 | `tools/dump_timesheets.py` | Script that produces the dump from the `.xlsx` files |
 | `Time Sheet *.xlsx` | The company's real time sheets — **local only, gitignored, never committed** |
-| `prototype.html` | Early throwaway mock — feature reference only, not a design reference (ADR-011) |
 
 ## Stack (decided)
 

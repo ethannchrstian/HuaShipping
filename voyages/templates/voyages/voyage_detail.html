@@ -21,23 +21,32 @@
 </header>
 
 {% if summary.port_time %}
-<section class="summary-strip" aria-label="Ringkasan hari">
+<section class="card ledger" aria-label="Ringkasan waktu">
   {% for b in summary.blocks %}
-    <div class="card sum-card">
-      <span class="sum-label">{{ b.label }}</span>
-      <span class="sum-value">{{ b.normalized }}</span>
-      <span class="sum-note">di sheet: {{ b.pair }}</span>
-    </div>
-  {% endfor %}
-  <div class="card sum-card sum-total">
-    <span class="sum-label">Total waktu di pelabuhan</span>
-    <span class="sum-value">{{ summary.port_time }}</span>
-    {% if summary.over_text %}<span class="sum-note {% if summary.over_days > 0 %}over{% endif %}">{{ summary.over_text }}</span>{% endif %}
+  <div class="ledger-row">
+    <span class="ledger-label">{{ b.label }}</span>
+    <span class="ledger-value">{{ b.normalized }}
+      <span class="ledger-note">di sheet: {{ b.pair }}</span>
+    </span>
   </div>
-  <div class="card sum-card {% if summary.demurrage_days %}sum-demurrage{% endif %}">
-    <span class="sum-label">Demurrage</span>
-    <span class="sum-value">{% if summary.demurrage_days is not None %}{{ summary.demurrage_days }} hari{% else %}—{% endif %}</span>
-    {% if summary.demurrage_amount %}<span class="sum-note">≈ {{ summary.demurrage_amount }}</span>{% endif %}
+  {% endfor %}
+  <div class="ledger-row ledger-total">
+    <span class="ledger-label">Total waktu di pelabuhan</span>
+    <span class="ledger-value">{{ summary.port_time }}
+      {% if summary.over_text %}<span class="ledger-note {% if summary.over_days > 0 %}over{% endif %}">{{ summary.over_text }}</span>{% endif %}
+    </span>
+  </div>
+  {% if summary.laytime %}
+  <div class="ledger-row">
+    <span class="ledger-label">Prorata sesuai kontrak</span>
+    <span class="ledger-value">{{ summary.laytime }} hari</span>
+  </div>
+  {% endif %}
+  <div class="ledger-row {% if summary.demurrage_days %}ledger-demurrage{% endif %}">
+    <span class="ledger-label">Demurrage</span>
+    <span class="ledger-value">{% if summary.demurrage_days is not None %}{{ summary.demurrage_days }} hari{% else %}—{% endif %}
+      {% if summary.demurrage_amount %}<span class="ledger-note">≈ {{ summary.demurrage_amount }}</span>{% endif %}
+    </span>
   </div>
 </section>
 {% endif %}
@@ -75,7 +84,7 @@
     </thead>
     <tbody>
       {% for row in timeline %}
-      <tr {% if row.ongoing %}class="ongoing-row"{% endif %}>
+      <tr class="{% if row.ongoing %}ongoing-row{% endif %} {% if row.is_sailing %}sailing-row{% endif %}">
         <td>{{ row.activity.activity_type.label_id }}</td>
         <td>{{ row.activity.start_at|date:"j M Y H:i" }}</td>
         <td>{% if row.activity.end_at %}{{ row.activity.end_at|date:"j M Y H:i" }}{% else %}<em>masih berjalan</em>{% endif %}</td>
@@ -98,6 +107,7 @@
   {% if not voyage.locked %}
   <div class="entry-row" id="entri">
     <h3>Tambah kegiatan</h3>
+    <p class="hint hint-top">Jam mulai sudah terisi dari kegiatan sebelumnya — tinggal lengkapi lalu simpan; baris berikutnya langsung siap.</p>
     <form method="post" action="{% url 'activity_add' voyage.pk %}" class="entry-form">
       {% csrf_token %}
       <div class="entry-grid">

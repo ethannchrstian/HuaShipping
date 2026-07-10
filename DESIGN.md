@@ -26,7 +26,7 @@ brand color. Numbers are the heroes; chrome recedes.
 |---|---|---|
 | `--paper` | `#f6f5f1` | page background (warm, not gray) |
 | `--card` | `#ffffff` | cards, table bodies |
-| `--line` | `#e2dfd6` | hairline borders, row separators |
+| `--line` | `#e7e4db` | hairline borders, row separators (`--line-soft #efede6` inside tables) |
 | `--ink` | `#22303a` | body text |
 | `--ink-soft` | `#5d6b76` | captions, secondary text |
 | `--sea` | `#155e75` | primary actions, links, focus, ongoing status |
@@ -50,7 +50,20 @@ color with an Indonesian word ("Berjalan", "+3 hari lebih", "Tumpang tindih").
   field-level errors in `--bad-ink` under the field (rule 2).
 - **Warning strip**: full-width tinted row inside the timeline, colored border
   left + plain-Indonesian sentence explaining and suggesting (blame-free).
-- **Sidebar**: 216px, paper-colored, text links; collapses to a top bar <760px.
+- **Ledger** (the voyage summary): one card, one figure per line — label left
+  in `--ink-soft`, value right in 650 weight tabular digits, provenance note
+  ("di sheet: …") small and faint beneath the value. Totals get larger size,
+  demurrage gets `--bad-ink`. Hierarchy from size/weight/color, never boxes.
+- **Sidebar**: 224px, paper-colored, text links with a 3px sea accent on the
+  active item; collapses to a top bar <760px.
+
+## Polish pass (2026-07-10, research-informed)
+
+Borders replaced by spacing where possible; KPI tiles merged into one bar;
+summary boxes became the ledger; labels rewritten as phrases ("hari di
+pelabuhan, semua voyage"); sailing legs and ongoing rows get quiet row marks.
+Sources: NN/g + Pencil&Paper enterprise-table patterns, GOV.UK design system,
+Refactoring UI (hierarchy via size/weight/color; de-emphasize, don't box).
 
 ## Layout
 

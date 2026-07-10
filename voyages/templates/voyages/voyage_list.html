@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Rekap voyage{% endblock %}
 {% block content %}
-<h1>Rekap voyage</h1>
+<div class="page-head">
+  <h1>Rekap voyage</h1>
+  <p class="lead">Semua perjalanan kedua kapal. Klik kode voyage untuk melihat rincian dan mencatat kegiatan.</p>
+</div>
 
 <section class="vessel-cards" aria-label="Posisi kapal saat ini">
   {% for c in cards %}
@@ -21,11 +24,11 @@
   {% endfor %}
 </section>
 
-<section class="kpis" aria-label="Ringkasan">
-  <div class="card kpi"><span class="kpi-value">{{ kpis.ongoing }}</span><span class="kpi-label">voyage berjalan</span></div>
-  <div class="card kpi"><span class="kpi-value">{{ kpis.port_days }}</span><span class="kpi-label">hari di pelabuhan</span></div>
-  <div class="card kpi"><span class="kpi-value">{{ kpis.dem_days }}</span><span class="kpi-label">hari demurrage</span></div>
-  <div class="card kpi"><span class="kpi-value">{{ kpis.mt }}</span><span class="kpi-label">MT terangkut</span></div>
+<section class="card kpi-bar" aria-label="Ringkasan angka">
+  <div class="kpi"><span class="kpi-value">{{ kpis.ongoing }}</span><span class="kpi-label">voyage sedang berjalan</span></div>
+  <div class="kpi"><span class="kpi-value">{{ kpis.port_days }}</span><span class="kpi-label">hari di pelabuhan, semua voyage</span></div>
+  <div class="kpi"><span class="kpi-value">{{ kpis.dem_days }}</span><span class="kpi-label">hari demurrage tertagih</span></div>
+  <div class="kpi"><span class="kpi-value">{{ kpis.mt }}</span><span class="kpi-label">MT muatan terangkut</span></div>
 </section>
 
 <form method="get" class="filters" aria-label="Saring daftar">

@@ -143,6 +143,7 @@ def list_rows(voyages) -> list[dict]:
                 "port_days": port.days if port else 0,
                 "laytime": laytime,
                 "over": port is not None and laytime is not None and port.days > laytime,
+                "over_days": (port.days - laytime) if port is not None and laytime is not None else 0,
             }
         )
     return rows

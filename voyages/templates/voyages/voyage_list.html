@@ -21,23 +21,23 @@
           <span class="chip chip-done">Selesai</span>
         {% endif %}
       </p>
-      <p class="vessel-phase">{{ c.phase }}{% if c.phase_ongoing %} <em>(sedang berlangsung)</em>{% endif %}</p>
+      <p class="vessel-phase">{{ c.phase }}{% if c.phase_ongoing %} <span class="chip chip-live">Sedang berlangsung</span>{% endif %}</p>
       <p class="vessel-port">Waktu di pelabuhan: <strong>{{ c.port_days }} hari</strong></p>
     </article>
   {% endfor %}
 </section>
 
 <section class="card kpi-bar" aria-label="Ringkasan angka">
-  <div class="kpi"><span class="kpi-value">{{ kpis.ongoing }}</span><span class="kpi-label">voyage sedang berjalan</span></div>
-  <div class="kpi"><span class="kpi-value">{{ kpis.port_days }}</span><span class="kpi-label">hari di pelabuhan, semua voyage</span></div>
-  <div class="kpi"><span class="kpi-value">{{ kpis.dem_days }}</span><span class="kpi-label">hari demurrage tertagih</span></div>
-  <div class="kpi"><span class="kpi-value">{{ kpis.mt }}</span><span class="kpi-label">MT muatan terangkut</span></div>
+  <div class="kpi"><span class="kpi-value">{{ kpis.ongoing }}</span><span class="kpi-label">Voyage berjalan</span></div>
+  <div class="kpi"><span class="kpi-value">{{ kpis.port_days }}</span><span class="kpi-label">Hari di pelabuhan</span></div>
+  <div class="kpi"><span class="kpi-value">{{ kpis.dem_days }}</span><span class="kpi-label">Hari demurrage</span></div>
+  <div class="kpi"><span class="kpi-value">{{ kpis.mt }}</span><span class="kpi-label">MT terangkut</span></div>
 </section>
 
 <form method="get" class="filters" aria-label="Saring daftar">
   <div class="field">
     <label for="f-kapal">Kapal</label>
-    <select name="kapal" id="f-kapal">
+    <select name="kapal" id="f-kapal" onchange="this.form.requestSubmit()">
       <option value="">Semua</option>
       {% for v in vessels %}
         <option value="{{ v.pk }}" {% if filters.kapal == v.pk|stringformat:"s" %}selected{% endif %}>{{ v.tug_name }}</option>
@@ -46,7 +46,7 @@
   </div>
   <div class="field">
     <label for="f-status">Status</label>
-    <select name="status" id="f-status">
+    <select name="status" id="f-status" onchange="this.form.requestSubmit()">
       <option value="">Semua</option>
       {% for value, label in statuses %}
         <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
@@ -55,7 +55,7 @@
   </div>
   <div class="field">
     <label for="f-tahun">Tahun</label>
-    <select name="tahun" id="f-tahun">
+    <select name="tahun" id="f-tahun" onchange="this.form.requestSubmit()">
       <option value="">Semua</option>
       {% for y in years %}
         <option value="{{ y }}" {% if filters.tahun == y %}selected{% endif %}>{{ y }}</option>
@@ -64,9 +64,9 @@
   </div>
   <div class="field field-grow">
     <label for="f-cari">Cari</label>
-    <input type="search" name="cari" id="f-cari" value="{{ filters.cari }}" placeholder="Kode, kontrak, kwitansi…">
+    <input type="search" name="cari" id="f-cari" class="search-input" value="{{ filters.cari }}" placeholder="Kode, kontrak, kwitansi — tekan Enter">
   </div>
-  <button type="submit" class="btn btn-secondary">Terapkan</button>
+  <button type="submit" class="sr-only">Terapkan</button>
 </form>
 
 <div class="card table-card">
@@ -90,9 +90,9 @@
         <td>{{ r.voyage.charterer.code|default:"—" }}</td>
         <td class="wrap">{{ r.route }}</td>
         <td>{{ r.start|date:"j M Y"|default:"—" }}</td>
-        <td class="num {% if r.over %}over{% endif %}">
+        <td class="num">
           {{ r.port_days }} / {{ r.laytime|default_if_none:"—" }}
-          {% if r.over %}<span class="over-note">lebih</span>{% endif %}
+          {% if r.over %}<span class="badge-over">+{{ r.over_days }} hari lebih</span>{% endif %}
         </td>
         <td>
           {% if r.voyage.status == "ONGOING" %}

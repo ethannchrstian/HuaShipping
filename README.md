@@ -10,14 +10,21 @@ tracking, for a ~10-person admin team.
 
 ## Status
 
-Planning phase — no application code yet. The planning documents in `docs/`
-are the current deliverable; code starts only after they're reviewed.
+Calculation engine complete (65 tests green; oracle test reproduces all 11 real
+voyages' printed totals). Next: Django models + historical importer, then the
+first screens.
+
+**New here? Start with [`docs/00-overview.md`](docs/00-overview.md)** — it
+explains everything built so far and how it works.
 
 ## Layout
 
 | Path | What |
 |---|---|
+| `docs/00-overview.md` | **Start here** — master explanation of the project so far |
 | `docs/01…10-*.md` | Planning documents (glossary → ERD → calc spec → … → open questions) |
+| `domain/` | The calculation engine — pure Python, no Django (model, calculations, warnings, parsing) |
+| `tests/domain/` | Unit tests + the Excel-as-oracle golden test |
 | `docs/reference/timesheets-raw.json` | Faithful dump of all real voyage sheets (ground truth for specs & oracle tests) |
 | `tools/dump_timesheets.py` | Script that produces the dump from the `.xlsx` files |
 | `Time Sheet *.xlsx` | The company's real time sheets — **local only, gitignored, never committed** |

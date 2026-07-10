@@ -74,3 +74,13 @@ identity from scratch** when UI work starts, via a deliberate design pass
 (DESIGN.md seeded then, not now) governed by PRODUCT.md's principles and the
 binding UI rules in docs/06. **Consequence:** no CSS is copied from
 prototype.html; it is used only to enumerate features.
+
+## ADR-012 · 2026-07-10 · Load jetties derive from parcels; no duplicate list on voyage
+The ERD sketched both `parcel.load_jetty` and an ordered load-jetty list on
+VOYAGE, flagging the duplication for an implementation-time decision. Decision:
+keep **only** `parcel.load_jetty` — every real multi-jetty voyage (HN2-V2601,
+HN1-V2606) has one parcel per load jetty, so the list is fully derivable, and
+two writable copies of the same fact could disagree (the exact failure mode
+this system exists to remove). **Consequence:** load-jetty display order comes
+from the voyage's parcels/port blocks; if a voyage ever loads one parcel across
+two jetties, revisit.

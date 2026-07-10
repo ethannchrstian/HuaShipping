@@ -146,11 +146,11 @@ a second "Perjalanan ke lokasi muat"). Block segmentation is defined in
 | Field | Type | Rules | Real example |
 |---|---|---|---|
 | start_at | timestamptz | required; stored UTC, **displayed Asia/Jakarta (WIB)** — every port in the data is UTC+7; revisit if they ever serve WITA ports | `2026-01-04 23:30` |
-| end_at | timestamptz | nullable (ongoing); DB `CHECK (end_at > start_at)` | `2026-01-09 14:30` |
+| end_at | timestamptz | nullable (ongoing); DB `CHECK (end_at >= start_at)` — `>=` because zero-duration rows are real (calc spec C1, HN2-V2603) | `2026-01-09 14:30` |
 | from/to_location | char(120) | sailing legs only; free text in V1 (real data mixes jetty names and non-jetty points like "PT. Bintang Inti Persada, Batam") | `Jetty PT. SMM, Belitung` |
 
 ### Integrity constraints (database level)
-1. `CHECK (end_at > start_at)` on ACTIVITY
+1. `CHECK (end_at >= start_at)` on ACTIVITY (zero duration legal per C1)
 2. `UNIQUE (vessel_id, code)` on VOYAGE
 3. FKs `PROTECT` (can't delete a jetty/vessel/charterer in use)
 4. `CHECK (laytime_load_days + laytime_discharge_days = laytime_days)` when all three set
@@ -160,9 +160,9 @@ a second "Perjalanan ke lokasi muat"). Block segmentation is defined in
 
 ## Modeling decisions & why
 
-- **Load jetties**: derived M2M through PARCEL (`parcel.load_jetty`) plus an
-  ordered explicit list on the voyage for display order. If this proves
-  redundant during implementation, keep only parcels (ADR to be updated).
+- **Load jetties**: derived from PARCEL only (`parcel.load_jetty`); the extra
+  ordered list on the voyage was dropped as redundant at implementation time
+  (ADR-012). Display order = order of the voyage's load blocks / parcels.
 - **Locations on activities as free text** in V1, not FK to JETTY: real sailing
   legs start/end at non-jetty locations (shipyards, anchorages, "PT. Bintang
   Inti Persada, Batam"). A later cleanup can promote frequent values to

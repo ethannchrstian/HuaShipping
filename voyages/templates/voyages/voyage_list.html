@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Rekap voyage{% endblock %}
+{% block content %}
+<h1>Rekap voyage</h1>
+
+<section class="vessel-cards" aria-label="Posisi kapal saat ini">
+  {% for c in cards %}
+    <article class="card vessel-card">
+      <h2 class="vessel-name">{{ c.vessel.tug_name }} &amp; {{ c.vessel.barge_name }}</h2>
+      <p class="vessel-now">
+        <a href="{% url 'voyage_detail' c.voyage.pk %}">{{ c.voyage.code }}</a>
+        {% if c.voyage.status == "ONGOING" %}
+          <span class="chip chip-ongoing">Berjalan</span>
+        {% else %}
+          <span class="chip chip-done">Selesai</span>
+        {% endif %}
+      </p>
+      <p class="vessel-phase">{{ c.phase }}{% if c.phase_ongoing %} <em>(sedang berlangsung)</em>{% endif %}</p>
+      <p class="vessel-port">Waktu di pelabuhan: <strong>{{ c.port_days }} hari</strong></p>
+    </article>
+  {% endfor %}
+</section>
+
+<section class="kpis" aria-label="Ringkasan">
+  <div class="card kpi"><span class="kpi-value">{{ kpis.ongoing }}</span><span class="kpi-label">voyage berjalan</span></div>
+  <div class="card kpi"><span class="kpi-value">{{ kpis.port_days }}</span><span class="kpi-label">hari di pelabuhan</span></div>
+  <div class="card kpi"><span class="kpi-value">{{ kpis.dem_days }}</span><span class="kpi-label">hari demurrage</span></div>
+  <div class="card kpi"><span class="kpi-value">{{ kpis.mt }}</span><span class="kpi-label">MT terangkut</span></div>
+</section>
+
+<form method="get" class="filters" aria-label="Saring daftar">
+  <div class="field">
+    <label for="f-kapal">Kapal</label>
+    <select name="kapal" id="f-kapal">
+      <option value="">Semua</option>
+      {% for v in vessels %}
+        <option value="{{ v.pk }}" {% if filters.kapal == v.pk|stringformat:"s" %}selected{% endif %}>{{ v.tug_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-status">Status</label>
+    <select name="status" id="f-status">
+      <option value="">Semua</option>
+      {% for value, label in statuses %}
+        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-tahun">Tahun</label>
+    <select name="tahun" id="f-tahun">
+      <option value="">Semua</option>
+      {% for y in years %}
+        <option value="{{ y }}" {% if filters.tahun == y %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field field-grow">
+    <label for="f-cari">Cari</label>
+    <input type="search" name="cari" id="f-cari" value="{{ filters.cari }}" placeholder="Kode, kontrak, kwitansi…">
+  </div>
+  <button type="submit" class="btn btn-secondary">Terapkan</button>
+</form>
+
+<div class="card table-card">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Kapal</th>
+        <th scope="col">Voyage</th>
+        <th scope="col">Pencharter</th>
+        <th scope="col">Rute</th>
+        <th scope="col">Mulai</th>
+        <th scope="col" class="num">Hari pelabuhan / kontrak</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.voyage.vessel.tug_name }}</td>
+        <td><a class="row-link" href="{% url 'voyage_detail' r.voyage.pk %}">{{ r.voyage.code }}</a></td>
+        <td>{{ r.voyage.charterer.code|default:"—" }}</td>
+        <td>{{ r.route }}</td>
+        <td>{{ r.start|date:"j M Y"|default:"—" }}</td>
+        <td class="num {% if r.over %}over{% endif %}">
+          {{ r.port_days }} / {{ r.laytime|default_if_none:"—" }}
+          {% if r.over %}<span class="over-note">lebih</span>{% endif %}
+        </td>
+        <td>
+          {% if r.voyage.status == "ONGOING" %}
+            <span class="chip chip-ongoing">Berjalan</span>
+          {% else %}
+            <span class="chip chip-done">Selesai</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="empty">Tidak ada voyage yang cocok dengan saringan.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

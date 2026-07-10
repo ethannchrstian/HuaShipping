@@ -105,7 +105,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# ADR-005: UI in Bahasa Indonesia, code/docs in English
+LANGUAGE_CODE = 'id'
 
 # ADR-008: store UTC (USE_TZ=True does this), display WIB
 TIME_ZONE = 'Asia/Jakarta'
@@ -119,3 +120,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Auth flow (S1): no self-registration, accounts created by the admin
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'rekap'
+LOGOUT_REDIRECT_URL = 'login'

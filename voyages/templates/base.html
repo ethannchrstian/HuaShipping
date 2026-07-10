@@ -1,0 +1,40 @@
+{% load static %}<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Hua Shipping{% endblock %} — Pencatatan Voyage</title>
+  <link rel="stylesheet" href="{% static 'voyages/app.css' %}">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-name">Hua Shipping</span>
+      <span class="brand-sub">Pencatatan voyage</span>
+    </div>
+    <nav aria-label="Menu utama">
+      <a href="{% url 'rekap' %}" {% if request.resolver_match.url_name == 'rekap' %}aria-current="page"{% endif %}>Rekap voyage</a>
+      <a href="{% url 'admin:index' %}">Data master</a>
+    </nav>
+    <div class="sidebar-foot">
+      <span class="user-name">{{ user.get_username }}</span>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost">Keluar</button>
+      </form>
+    </div>
+  </aside>
+  <main class="content">
+    {% if messages %}
+      <div class="messages" role="status">
+        {% for message in messages %}
+          <div class="message message-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}{{ voyage.code }} · {{ voyage.vessel.tug_name }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{% url 'rekap' %}">Rekap voyage</a> / {{ voyage.code }}</p>
+
+<header class="detail-head">
+  <h1>{{ voyage.code }} <span class="head-vessel">{{ voyage.vessel.name }}</span></h1>
+  <p class="head-meta">
+    {% if voyage.status == "ONGOING" %}<span class="chip chip-ongoing">Berjalan</span>
+    {% else %}<span class="chip chip-done">Selesai</span>{% endif %}
+    {% if voyage.locked %}<span class="chip chip-locked">Terkunci</span>{% endif %}
+    <span>{{ route }}</span>
+    {% if voyage.charterer %}<span>Pencharter: {{ voyage.charterer.code }}</span>{% endif %}
+  </p>
+  <dl class="head-refs">
+    <div><dt>No. kontrak</dt><dd>{{ voyage.contract_no|default:"—" }}</dd></div>
+    <div><dt>Kwitansi</dt><dd>{{ voyage.invoice_no|default:"—" }}</dd></div>
+    <div><dt>Prorata kontrak</dt><dd>{% if summary.laytime %}{{ summary.laytime }} hari{% else %}—{% endif %}</dd></div>
+    <div><dt>Tarif demurrage</dt><dd>{% if demurrage_rate %}{{ demurrage_rate }}/hari{% else %}—{% endif %}</dd></div>
+  </dl>
+</header>
+
+{% if summary.port_time %}
+<section class="summary-strip" aria-label="Ringkasan hari">
+  {% for b in summary.blocks %}
+    <div class="card sum-card">
+      <span class="sum-label">{{ b.label }}</span>
+      <span class="sum-value">{{ b.normalized }}</span>
+      <span class="sum-note">di sheet: {{ b.pair }}</span>
+    </div>
+  {% endfor %}
+  <div class="card sum-card sum-total">
+    <span class="sum-label">Total waktu di pelabuhan</span>
+    <span class="sum-value">{{ summary.port_time }}</span>
+    {% if summary.over_text %}<span class="sum-note {% if summary.over_days > 0 %}over{% endif %}">{{ summary.over_text }}</span>{% endif %}
+  </div>
+  <div class="card sum-card {% if summary.demurrage_days %}sum-demurrage{% endif %}">
+    <span class="sum-label">Demurrage</span>
+    <span class="sum-value">{% if summary.demurrage_days is not None %}{{ summary.demurrage_days }} hari{% else %}—{% endif %}</span>
+    {% if summary.demurrage_amount %}<span class="sum-note">≈ {{ summary.demurrage_amount }}</span>{% endif %}
+  </div>
+</section>
+{% endif %}
+
+<section class="card" aria-label="Muatan">
+  <h2>Muatan</h2>
+  {% if parcels %}
+  <table>
+    <thead><tr><th scope="col">Komoditas</th><th scope="col" class="num">Jumlah (MT)</th><th scope="col">Jetty muat</th><th scope="col">Pengirim</th></tr></thead>
+    <tbody>
+      {% for p in parcels %}
+      <tr>
+        <td>{{ p.commodity }}</td>
+        <td class="num">{{ p.quantity_mt|floatformat:"0" }}</td>
+        <td>{{ p.load_jetty }}</td>
+        <td>{{ p.shipper|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="empty">Belum ada data muatan.</p>{% endif %}
+</section>
+
+<section class="card" aria-label="Kegiatan">
+  <h2>Kegiatan</h2>
+  <table class="timeline">
+    <thead>
+      <tr>
+        <th scope="col">Kegiatan</th>
+        <th scope="col">Mulai</th>
+        <th scope="col">Selesai</th>
+        <th scope="col" class="num">Lama</th>
+        <th scope="col">Catatan</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in timeline %}
+      <tr {% if row.ongoing %}class="ongoing-row"{% endif %}>
+        <td>{{ row.activity.activity_type.label_id }}</td>
+        <td>{{ row.activity.start_at|date:"j M Y H:i" }}</td>
+        <td>{% if row.activity.end_at %}{{ row.activity.end_at|date:"j M Y H:i" }}{% else %}<em>masih berjalan</em>{% endif %}</td>
+        <td class="num">{{ row.duration }}</td>
+        <td class="note-cell">
+          {% if row.is_sailing and row.activity.from_location %}{{ row.activity.from_location }} → {{ row.activity.to_location }}. {% endif %}{{ row.activity.note }}
+        </td>
+      </tr>
+      {% if row.warning %}
+      <tr class="warning-row warning-{{ row.warning_kind }}">
+        <td colspan="5">{{ row.warning }}</td>
+      </tr>
+      {% endif %}
+      {% empty %}
+      <tr><td colspan="5" class="empty">Belum ada kegiatan tercatat.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not voyage.locked %}
+  <div class="entry-row" id="entri">
+    <h3>Tambah kegiatan</h3>
+    <form method="post" action="{% url 'activity_add' voyage.pk %}" class="entry-form">
+      {% csrf_token %}
+      <div class="entry-grid">
+        <div class="field">
+          <label for="{{ form.activity_type.id_for_label }}">{{ form.activity_type.label }}</label>
+          {{ form.activity_type }}
+          {% for e in form.activity_type.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="field">
+          <label for="{{ form.start_at.id_for_label }}">{{ form.start_at.label }}</label>
+          {{ form.start_at }}
+          {% for e in form.start_at.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="field">
+          <label for="{{ form.end_at.id_for_label }}">{{ form.end_at.label }}</label>
+          {{ form.end_at }}
+          <p class="hint">{{ form.end_at.help_text }}</p>
+          {% for e in form.end_at.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="field">
+          <label for="{{ form.from_location.id_for_label }}">{{ form.from_location.label }}</label>
+          {{ form.from_location }}
+          <p class="hint">{{ form.from_location.help_text }}</p>
+        </div>
+        <div class="field">
+          <label for="{{ form.to_location.id_for_label }}">{{ form.to_location.label }}</label>
+          {{ form.to_location }}
+        </div>
+        <div class="field field-grow">
+          <label for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+          {{ form.note }}
+        </div>
+      </div>
+      {% for e in form.non_field_errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+      <button type="submit" class="btn btn-primary">Simpan kegiatan</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="hint">Voyage terkunci — kegiatan tidak dapat diubah.</p>
+  {% endif %}
+</section>
+{% endblock %}

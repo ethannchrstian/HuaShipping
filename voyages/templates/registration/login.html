@@ -1,0 +1,32 @@
+{% load static %}<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk — Hua Shipping</title>
+  <link rel="stylesheet" href="{% static 'voyages/app.css' %}">
+</head>
+<body class="login-page">
+  <main class="login-card card">
+    <h1 class="brand-name">Hua Shipping</h1>
+    <p class="brand-sub">Pencatatan voyage — masuk untuk melanjutkan</p>
+    {% if form.errors %}
+      <div class="field-error" role="alert">Nama pengguna atau kata sandi salah. Coba lagi.</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="field">
+        <label for="id_username">Nama pengguna</label>
+        <input type="text" name="username" id="id_username" autofocus autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="id_password">Kata sandi</label>
+        <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-wide">Masuk</button>
+      <input type="hidden" name="next" value="{{ next }}">
+    </form>
+    <p class="hint">Belum punya akun? Hubungi admin kantor.</p>
+  </main>
+</body>
+</html>

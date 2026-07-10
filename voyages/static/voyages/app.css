@@ -1,0 +1,187 @@
+/* Hua Shipping — visual identity per DESIGN.md ("ledger on good paper").
+   Binding rules (docs/06): base 16px, tables >=15px, 44px targets, labeled
+   controls, visible focus, color never alone. */
+
+:root {
+  --paper: #f6f5f1;
+  --card: #ffffff;
+  --line: #e2dfd6;
+  --ink: #22303a;
+  --ink-soft: #5d6b76;
+  --sea: #155e75;
+  --sea-deep: #0e4256;
+  --ok-bg: #eef4ee;  --ok-ink: #2e5e3a;
+  --warn-bg: #fdf3e0; --warn-ink: #8a5a00;
+  --bad-bg: #fdecea;  --bad-ink: #8f2f24;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.5;
+}
+a { color: var(--sea); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 2px;
+}
+h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 16px; }
+h2 { font-size: 1.125rem; font-weight: 600; margin: 0 0 12px; }
+h3 { font-size: 1rem; font-weight: 600; margin: 0 0 8px; }
+
+/* ---- shell ---- */
+.shell { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 216px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  padding: 20px 16px; gap: 20px;
+  border-right: 1px solid var(--line);
+}
+.brand-name { display: block; font-weight: 600; font-size: 1.125rem; }
+.brand-sub { display: block; color: var(--ink-soft); font-size: 0.8125rem; }
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; }
+.sidebar nav a {
+  display: block; padding: 10px 12px; min-height: 44px;
+  border-radius: 6px; text-decoration: none; color: var(--ink);
+}
+.sidebar nav a[aria-current="page"] { background: var(--card); border: 1px solid var(--line); font-weight: 600; }
+.sidebar nav a:hover { background: var(--card); }
+.sidebar-foot { margin-top: auto; font-size: 0.875rem; color: var(--ink-soft); }
+.user-name { display: block; margin-bottom: 8px; }
+.content { flex: 1; padding: 24px 28px; max-width: 1080px; }
+
+@media (max-width: 760px) {
+  .shell { flex-direction: column; }
+  .sidebar {
+    width: auto; flex-direction: row; align-items: center;
+    border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 16px;
+  }
+  .sidebar nav { flex-direction: row; }
+  .sidebar-foot { margin-top: 0; margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .user-name { margin: 0; }
+  .content { padding: 16px; }
+}
+
+/* ---- cards ---- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-block; min-height: 44px; padding: 10px 20px;
+  border-radius: 6px; border: 1px solid transparent;
+  font: inherit; font-weight: 600; cursor: pointer; text-decoration: none;
+}
+.btn-primary { background: var(--sea); color: #fff; }
+.btn-primary:hover { background: var(--sea-deep); }
+.btn-secondary { background: var(--card); color: var(--ink); border-color: var(--line); }
+.btn-secondary:hover { border-color: var(--ink-soft); }
+.btn-ghost { background: none; color: var(--ink-soft); border: 0; padding: 6px 8px; min-height: 0; cursor: pointer; font: inherit; }
+.btn-ghost:hover { color: var(--ink); text-decoration: underline; }
+.btn-wide { width: 100%; }
+
+/* ---- chips ---- */
+.chip {
+  display: inline-block; padding: 2px 10px; border-radius: 4px;
+  font-size: 0.8125rem; font-weight: 600; white-space: nowrap;
+}
+.chip::before { content: "● "; font-size: 0.625rem; vertical-align: 1px; }
+.chip-ongoing { background: #e7f0f4; color: var(--sea-deep); }
+.chip-done { background: var(--ok-bg); color: var(--ok-ink); }
+.chip-locked { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
+
+/* ---- messages ---- */
+.messages { margin-bottom: 16px; }
+.message { padding: 12px 16px; border-radius: 6px; border: 1px solid var(--line); margin-bottom: 8px; }
+.message-success { background: var(--ok-bg); color: var(--ok-ink); border-color: #cfe0cf; }
+.message-error { background: var(--bad-bg); color: var(--bad-ink); border-color: #eccfcb; }
+
+/* ---- tables ---- */
+table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+th, td { text-align: left; padding: 12px 12px; border-bottom: 1px solid var(--line); }
+th { color: var(--ink-soft); font-weight: 600; font-size: 0.8125rem; }
+tbody tr { min-height: 44px; }
+tbody tr:hover { background: #fbfaf7; }
+tbody tr:last-child td { border-bottom: 0; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-card { padding: 4px 8px; }
+.row-link { font-weight: 600; }
+.empty { color: var(--ink-soft); text-align: center; padding: 24px; }
+.over { color: var(--bad-ink); font-weight: 600; }
+.over-note { font-size: 0.8125rem; margin-left: 4px; }
+
+/* ---- voyage list ---- */
+.vessel-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.vessel-name { font-size: 1rem; margin-bottom: 8px; }
+.vessel-now { margin: 0 0 4px; display: flex; gap: 8px; align-items: center; }
+.vessel-phase { margin: 0 0 4px; color: var(--ink-soft); }
+.vessel-phase em { font-style: normal; color: var(--sea-deep); }
+.vessel-port { margin: 0; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.kpi { text-align: center; }
+.kpi-value { display: block; font-size: 1.75rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpi-label { color: var(--ink-soft); font-size: 0.875rem; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 16px; }
+.filters .field { margin: 0; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.field-grow { flex: 1; min-width: 200px; }
+.field label { font-size: 0.875rem; font-weight: 600; color: var(--ink-soft); }
+input, select, textarea {
+  font: inherit; color: var(--ink);
+  min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--card);
+}
+.field-error { color: var(--bad-ink); font-size: 0.875rem; margin: 4px 0 0; }
+.hint { color: var(--ink-soft); font-size: 0.8125rem; margin: 4px 0 0; }
+
+/* ---- voyage detail ---- */
+.crumbs { font-size: 0.875rem; color: var(--ink-soft); margin: 0 0 8px; }
+.detail-head { margin-bottom: 16px; }
+.head-vessel { font-weight: 400; color: var(--ink-soft); font-size: 1rem; margin-left: 8px; }
+.head-meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 4px 0 12px; color: var(--ink-soft); }
+.head-refs { display: flex; flex-wrap: wrap; gap: 24px; margin: 0; }
+.head-refs dt { font-size: 0.8125rem; color: var(--ink-soft); }
+.head-refs dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.summary-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.sum-card { margin-bottom: 0; }
+.summary-strip { margin-bottom: 16px; }
+.sum-label { display: block; font-size: 0.8125rem; color: var(--ink-soft); }
+.sum-value { display: block; font-size: 1.375rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sum-note { display: block; font-size: 0.8125rem; color: var(--ink-soft); }
+.sum-total { border-color: var(--sea); }
+.sum-demurrage { border-color: var(--bad-ink); }
+.sum-demurrage .sum-value { color: var(--bad-ink); }
+
+.timeline .ongoing-row { background: #f0f6f8; }
+.warning-row td { font-size: 0.875rem; padding-top: 8px; padding-bottom: 8px; }
+.warning-gap td { background: var(--warn-bg); color: var(--warn-ink); border-left: 3px solid var(--warn-ink); }
+.warning-overlap td { background: var(--bad-bg); color: var(--bad-ink); border-left: 3px solid var(--bad-ink); }
+.note-cell { color: var(--ink-soft); font-size: 0.875rem; }
+
+.entry-row { border-top: 2px solid var(--line); margin-top: 8px; padding-top: 16px; }
+.entry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+
+/* ---- login ---- */
+.login-page { display: grid; place-items: center; min-height: 100vh; padding: 16px; }
+.login-card { width: 100%; max-width: 380px; padding: 32px; }
+.login-card .brand-sub { margin-bottom: 20px; }
+.login-card form { margin-top: 16px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .sidebar nav a { transition: background-color 120ms ease, border-color 120ms ease; }
+}
+@media print {
+  .sidebar, .filters, .entry-row { display: none; }
+  .content { padding: 0; max-width: none; }
+}

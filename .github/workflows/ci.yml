@@ -22,3 +22,9 @@ jobs:
         run: |
           python manage.py check
           python manage.py makemigrations --check --dry-run
+      - name: Production hardening check
+        env:
+          DJANGO_DEBUG: "false"
+          DJANGO_SECRET_KEY: "ci-only-dummy-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz"
+          DJANGO_ALLOWED_HOSTS: "example.com"
+        run: python manage.py check --deploy --fail-level WARNING

@@ -1,0 +1,16 @@
+# Railway deployment (docs/08-ops.md). Region: Singapore.
+# Required environment variables on the service:
+#   DJANGO_SECRET_KEY   (long random string)
+#   DJANGO_DEBUG        = false
+#   DJANGO_ALLOWED_HOSTS = <app-domain>
+#   DJANGO_CSRF_TRUSTED_ORIGINS = https://<app-domain>
+#   DATABASE_URL        (auto-set when a Postgres service is attached)
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+preDeployCommand = "python manage.py migrate --noinput"
+startCommand = "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --log-file -"
+healthcheckPath = "/masuk/"
+restartPolicyType = "on_failure"

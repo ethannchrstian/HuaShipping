@@ -2,6 +2,12 @@ django>=6.0,<6.1
 django-simple-history>=3.7
 openpyxl>=3.1
 
+# production serving (docs/08-ops.md)
+gunicorn>=23
+whitenoise>=6.8
+dj-database-url>=2.3
+psycopg[binary]>=3.2
+
 # dev / test
 pytest>=8
 pytest-django>=4.9

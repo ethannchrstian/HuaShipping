@@ -137,6 +137,7 @@ def list_rows(voyages) -> list[dict]:
         rows.append(
             {
                 "voyage": v,
+                "vessel_short": v.vessel.tug_name.replace("TB. HUA ", ""),
                 "route": route(v),
                 "start": start,
                 "port_days": port.days if port else 0,

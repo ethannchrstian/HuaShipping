@@ -1,78 +1,78 @@
-# DESIGN — Visual identity
+# DESIGN — Visual identity (v3)
 
-Seeded at UI-build time per ADR-011. Governed by PRODUCT.md ("tenang, jelas,
-terpercaya" — feels like well-organized paperwork, not a startup dashboard) and
-the binding UI rules in docs/06-screens.md. prototype.html is an
-anti-reference: no condensed display fonts, no emoji icons, no uppercase
-micro-labels, no gradients.
+Governed by PRODUCT.md ("tenang, jelas, terpercaya") and the binding UI rules
+in docs/06-screens.md. prototype.html remains an anti-reference (no emoji
+icons, no uppercase micro-labels, no gradients).
+
+**v3 (2026-07-11):** redesigned against rendered screenshots and owner-chosen
+reference UIs (modern logistics dashboards). v1/v2's "borderless paper" look
+read as unstyled; the fix was a dark anchored sidebar, real elevation, and
+confident hierarchy. Rule learned the hard way: **no styling ships without
+being looked at** — screenshot via Playwright (`scratchpad/shoot.py` flow),
+inspect, iterate.
 
 ## Feel
 
-Ledger on good paper. Warm paper background, white cards with hairline borders
-(no drop shadows), generous 44px touch targets, calm deep-sea blue as the only
-brand color. Numbers are the heroes; chrome recedes.
+A calm, professional operations tool: dark navy sidebar anchoring the screen,
+white cards floating with soft shadows on a cool-gray canvas, one confident
+teal for actions, generous 44px targets. Numbers are the heroes.
 
 ## Type
 
-- System humanist stack: `"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`
-  — office PCs, zero font downloads, instantly familiar.
-- Base **16px**, tables **15px**, captions 13px, nothing under 12px (binding rule 4).
-- Numbers use `font-variant-numeric: tabular-nums` so columns align.
-- Weight does the hierarchy (600 for headings/values), not size explosions.
+- **Inter** (self-hosted variable font, `static/voyages/fonts/`), fallback
+  Segoe UI. Base **16px**, tables **15px**, captions 13px, nothing under 12px.
+- Hierarchy by size *and* weight: page titles 28px/700 with tight tracking,
+  section titles 17px/650, values 650, labels 500 gray.
+- `font-variant-numeric: tabular-nums` everywhere numbers align.
 
 ## Color
 
 | Token | Value | Use |
 |---|---|---|
-| `--paper` | `#f6f5f1` | page background (warm, not gray) |
-| `--card` | `#ffffff` | cards, table bodies |
-| `--line` | `#e7e4db` | hairline borders, row separators (`--line-soft #efede6` inside tables) |
-| `--ink` | `#22303a` | body text |
-| `--ink-soft` | `#5d6b76` | captions, secondary text |
-| `--sea` | `#155e75` | primary actions, links, focus, ongoing status |
-| `--sea-deep` | `#0e4256` | hover/active |
-| `--ok-bg / --ok-ink` | `#eef4ee` / `#2e5e3a` | "Selesai", verified states |
-| `--warn-bg / --warn-ink` | `#fdf3e0` / `#8a5a00` | W1 gap warnings |
-| `--bad-bg / --bad-ink` | `#fdecea` / `#8f2f24` | W2 overlap, validation errors |
+| `--navy` | `#10273f` | sidebar background |
+| `--canvas` | `#eef1f5` | page background (cool gray) |
+| `--card` | `#ffffff` | cards, tables |
+| `--line / --line-soft` | `#e6e9ef / #eef0f4` | card edges, row separators |
+| `--ink / --ink-soft / --ink-faint` | `#1b2733 / #667085 / #98a2b3` | text tiers |
+| `--sea / --sea-deep / --sea-tint` | `#155e75 / #0e4256 / #e3eef2` | actions, links, ongoing |
+| `--ok-*` | `#e5f3e9 / #1e6b3a` | Selesai |
+| `--warn-*` | `#fdf3dd / #8a5a00` | W1 gap strips |
+| `--bad-*` | `#fdebe8 / #b42318` | W2 overlap, errors, demurrage |
+| `--shadow` | `0 1px 2px …05, 0 1px 3px …08` | card elevation |
 
 Color never carries meaning alone (rule 5): every status/warning pairs the
 color with an Indonesian word ("Berjalan", "+3 hari lebih", "Tumpang tindih").
 
 ## Components
 
-- **Card**: white, 1px `--line` border, 8px radius, 16–20px padding. No shadow.
-- **Status chip**: 8px dot + word ("● Berjalan"), 4px radius, tinted background.
-- **Buttons**: primary = filled `--sea`, white text; secondary = white with
-  `--line` border. Min height 44px, always a labeled Indonesian word (rule 1).
-- **Tables**: 15px, left-aligned text / right-aligned numbers, 44px rows,
-  row = real link with visible focus ring (rule 6), zebra off, hover tint.
-- **Inputs**: 44px, white, 1px border, 2px `--sea` focus ring; labels above,
-  field-level errors in `--bad-ink` under the field (rule 2).
-- **Warning strip**: full-width tinted row inside the timeline, colored border
-  left + plain-Indonesian sentence explaining and suggesting (blame-free).
-- **Ledger** (the voyage summary): one card, one figure per line — label left
-  in `--ink-soft`, value right in 650 weight tabular digits, provenance note
-  ("di sheet: …") small and faint beneath the value. Totals get larger size,
-  demurrage gets `--bad-ink`. Hierarchy from size/weight/color, never boxes.
-- **Sidebar**: 224px, paper-colored, text links with a 3px sea accent on the
-  active item; collapses to a top bar <760px.
-
-## Polish pass (2026-07-10, research-informed)
-
-Borders replaced by spacing where possible; KPI tiles merged into one bar;
-summary boxes became the ledger; labels rewritten as phrases ("hari di
-pelabuhan, semua voyage"); sailing legs and ongoing rows get quiet row marks.
-Sources: NN/g + Pencil&Paper enterprise-table patterns, GOV.UK design system,
-Refactoring UI (hierarchy via size/weight/color; de-emphasize, don't box).
+- **Sidebar**: 240px sticky navy column; white brand block; nav items 44px,
+  `rgba(255,255,255,.72)` text, active = 14% white pill; footer (user, Keluar)
+  above a hairline. Collapses to a top bar <760px.
+- **Card**: white, 12px radius, `--shadow`, 1px `--line` edge.
+- **Status pills**: dot + word, tinted background, 999px radius.
+- **Buttons**: primary filled `--sea` with shadow; secondary white with
+  `#d0d5dd` border. Always a labeled Indonesian word.
+- **Tables**: `#f9fafb` header band with 13px gray-600 labels; 14–16px cell
+  padding; `white-space: nowrap` by default with `.wrap` opt-out (routes,
+  notes); hover `#f6f8fb`; numbers right-aligned tabular.
+- **KPI cards**: label on top (gray 13.5px), number below (30px/700).
+- **Vessel cards**: 3px `--sea` top accent; voyage code 24px/700.
+- **Ledger** (voyage summary): one figure per line — label left gray, value
+  right 650 tabular, faint provenance note ("di sheet: …") beneath; total row
+  22px, demurrage in `--bad-ink`.
+- **Timeline marks**: ongoing row = `--sea-tint` fill; sailing leg = 3px
+  muted-blue inset left edge; W1/W2 = tinted full-width strips with a plain
+  Indonesian sentence.
+- **Entry panel (S5)**: `#f8fafc` inset panel inside the timeline card.
 
 ## Layout
 
-8px spacing grid; content max-width 1080px; page = title row, then cards.
-Focus states: 2px solid `--sea`, 2px offset, everywhere.
-`prefers-reduced-motion` honored (no animation is the default anyway).
+8px grid; content column max 1160px in a 48px-padded area; sections separated
+by 24px. Focus ring: 2px `--sea`, offset 2. `prefers-reduced-motion` honored.
 
 ## Voice
 
-Bahasa Indonesia everywhere (rule 8), sentence case, no jargon, no
-exclamation points. Verbs are specific and consistent (rule 7): "Simpan
-kegiatan", "Selesaikan voyage", "Ekspor CSV".
+Bahasa Indonesia everywhere, sentence case, no jargon, no exclamation points.
+Verbs specific and consistent: "Simpan kegiatan", "Selesaikan voyage",
+"Ekspor CSV". Labels are phrases, not codes ("hari di pelabuhan, semua
+voyage").

@@ -48,8 +48,9 @@ LABEL_TO_TYPE = [
 # Real data-entry errors the engine must flag, not reproduce (docs/05 known-errors table):
 # - V2501 & HN1-V2604: an activity ends before it starts (importer clears the end + flags)
 # - HN2-V2602: row 17 start date typo'd a day early (24h overlap with loading) AND row 16's
-#   typed day-count contradicts its own timestamps -> printed block A (and the demurrage
-#   billed from it) is inflated; discovered by this oracle on 2026-07-10
+#   HARI formula (=I-F, midnights crossed) double-counts a day whose duration is already in
+#   the hand-typed WAKTU cell -> printed block A (and the demurrage billed from it) is
+#   inflated; discovered by this oracle on 2026-07-10
 END_BEFORE_START_SHEETS = {"HN 1 PH 2401 Voy. V2501", "HN 1 PH 2401 Voy. V2604"}
 OVERLAP_SHEETS = {"HN 2 PH 2402 Voy. V2602"}
 KNOWN_ERROR_SHEETS = END_BEFORE_START_SHEETS | OVERLAP_SHEETS

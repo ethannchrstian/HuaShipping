@@ -240,9 +240,12 @@ While making the oracle pass, the engine refused to reproduce HN2 voyage
 V2602's printed load total (we computed 6 days where the sheet prints 7).
 Manual inspection proved the *sheet* is wrong: one row's start date is typo'd a
 day early (creating a ~24-hour overlap with the loading activity — exactly what
-the C7 overlap warning flags), and another row's typed day-count contradicts its
-own timestamps. Those errors inflate the printed total — and the **7 demurrage
-days billed from it at Rp 15.000.000/day are overstated**.
+the C7 overlap warning flags), and another row double-counts a day: its HARI
+cell uses the formula `=end date − start date`, which counts *midnights crossed*
+rather than elapsed days, so an 18-hour activity that crossed midnight got
+1 hari **plus** its full 18:20 typed into WAKTU. Those errors inflate the
+printed total — and the **7 demurrage days billed from it at Rp 15.000.000/day
+are overstated**.
 
 That's potentially tens of millions of rupiah on one voyage, found by an
 automated check before the app has a single screen. It's recorded in

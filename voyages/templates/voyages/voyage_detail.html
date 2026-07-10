@@ -18,6 +18,16 @@
     <div><dt>Prorata kontrak</dt><dd>{% if summary.laytime %}{{ summary.laytime }} hari{% else %}—{% endif %}</dd></div>
     <div><dt>Tarif demurrage</dt><dd>{% if demurrage_rate %}{{ demurrage_rate }}/hari{% else %}—{% endif %}</dd></div>
   </dl>
+  <div class="head-actions">
+    {% if not voyage.locked %}
+      <a class="btn btn-secondary" href="{% url 'voyage_edit' voyage.pk %}">Ubah voyage</a>
+      {% if voyage.status == "ONGOING" %}
+        <a class="btn btn-secondary" href="{% url 'voyage_complete' voyage.pk %}">Selesaikan voyage</a>
+      {% endif %}
+    {% else %}
+      <a class="btn btn-secondary" href="{% url 'voyage_unlock' voyage.pk %}">Buka kunci</a>
+    {% endif %}
+  </div>
 </header>
 
 {% if summary.port_time %}
@@ -80,11 +90,12 @@
         <th scope="col">Selesai</th>
         <th scope="col" class="num">Lama</th>
         <th scope="col">Catatan</th>
+        {% if not voyage.locked %}<th scope="col"><span class="sr-only">Aksi</span></th>{% endif %}
       </tr>
     </thead>
     <tbody>
       {% for row in timeline %}
-      <tr class="{% if row.ongoing %}ongoing-row{% endif %} {% if row.is_sailing %}sailing-row{% endif %}">
+      <tr class="{% if row.ongoing %}ongoing-row{% endif %} {% if row.is_sailing %}sailing-row{% endif %} {% if editing_activity and editing_activity.pk == row.activity.pk %}editing-row{% endif %}">
         <td>{{ row.activity.activity_type.label_id }}</td>
         <td>{{ row.activity.start_at|date:"j M Y H:i" }}</td>
         <td>{% if row.activity.end_at %}{{ row.activity.end_at|date:"j M Y H:i" }}{% else %}<em>masih berjalan</em>{% endif %}</td>
@@ -92,23 +103,32 @@
         <td class="note-cell">
           {% if row.is_sailing and row.activity.from_location %}{{ row.activity.from_location }} → {{ row.activity.to_location }}. {% endif %}{{ row.activity.note }}
         </td>
+        {% if not voyage.locked %}
+        <td class="action-cell"><a href="{% url 'activity_edit' row.activity.pk %}#entri">Ubah</a></td>
+        {% endif %}
       </tr>
       {% if row.warning %}
       <tr class="warning-row warning-{{ row.warning_kind }}">
-        <td colspan="5">{{ row.warning }}</td>
+        <td colspan="{% if voyage.locked %}5{% else %}6{% endif %}">{{ row.warning }}</td>
       </tr>
       {% endif %}
       {% empty %}
-      <tr><td colspan="5" class="empty">Belum ada kegiatan tercatat.</td></tr>
+      <tr><td colspan="{% if voyage.locked %}5{% else %}6{% endif %}" class="empty">Belum ada kegiatan tercatat — mulai dengan perjalanan ke lokasi muat di bawah.</td></tr>
       {% endfor %}
     </tbody>
   </table>
 
   {% if not voyage.locked %}
   <div class="entry-row" id="entri">
+    {% if editing_activity %}
+    <h3>Ubah kegiatan</h3>
+    <p class="hint hint-top">Mengubah baris “{{ editing_activity.activity_type.label_id }}” ({{ editing_activity.start_at|date:"j M Y H:i" }}).</p>
+    <form method="post" action="{% url 'activity_edit' editing_activity.pk %}" class="entry-form">
+    {% else %}
     <h3>Tambah kegiatan</h3>
     <p class="hint hint-top">Jam mulai sudah terisi dari kegiatan sebelumnya — tinggal lengkapi lalu simpan; baris berikutnya langsung siap.</p>
     <form method="post" action="{% url 'activity_add' voyage.pk %}" class="entry-form">
+    {% endif %}
       {% csrf_token %}
       <div class="entry-grid">
         <div class="field">
@@ -142,8 +162,19 @@
         </div>
       </div>
       {% for e in form.non_field_errors %}<p class="field-error">{{ e }}</p>{% endfor %}
-      <button type="submit" class="btn btn-primary">Simpan kegiatan</button>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{% if editing_activity %}Simpan perubahan{% else %}Simpan kegiatan{% endif %}</button>
+        {% if editing_activity %}
+        <a class="btn btn-secondary" href="{% url 'voyage_detail' voyage.pk %}#entri">Batal</a>
+        {% endif %}
+      </div>
     </form>
+    {% if editing_activity %}
+    <form method="post" action="{% url 'activity_delete' editing_activity.pk %}" class="delete-form">
+      {% csrf_token %}
+      <button type="submit" class="btn-ghost btn-danger-ghost">Hapus kegiatan ini</button>
+    </form>
+    {% endif %}
   </div>
   {% else %}
   <p class="hint">Voyage terkunci — kegiatan tidak dapat diubah.</p>

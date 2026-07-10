@@ -1,8 +1,11 @@
-"""S5 — the inline activity entry form (docs/06)."""
+"""Forms: S4 voyage form + S5 inline activity entry (docs/06)."""
+
+from datetime import date
 
 from django import forms
+from django.forms import inlineformset_factory
 
-from .models import Activity, ActivityType
+from .models import Activity, ActivityType, Parcel, Vessel, Voyage
 
 DATETIME_LOCAL = "%Y-%m-%dT%H:%M"
 
@@ -20,6 +23,80 @@ NEXT_TYPE = {
     "discharging": "preparation",
     "preparation": "ballast",
 }
+
+
+def next_code(vessel: Vessel) -> str:
+    """Next voyage code in this vessel's sequence, e.g. V2607 -> V2608."""
+    year = date.today().strftime("%y")
+    prefix = f"V{year}"
+    numbers = [
+        int(c[3:]) for c in vessel.voyages.filter(code__startswith=prefix).values_list("code", flat=True)
+        if c[3:].isdigit()
+    ]
+    return f"{prefix}{max(numbers, default=0) + 1:02d}"
+
+
+class VoyageForm(forms.ModelForm):
+    class Meta:
+        model = Voyage
+        fields = [
+            "vessel", "code", "charterer", "contract_no", "invoice_no",
+            "discharge_jetty", "laytime_days", "laytime_load_days",
+            "laytime_discharge_days", "demurrage_rate_idr", "notes",
+        ]
+        labels = {
+            "vessel": "Kapal",
+            "code": "Kode voyage",
+            "charterer": "Pencharter",
+            "contract_no": "No. kontrak",
+            "invoice_no": "Kwitansi nomor",
+            "discharge_jetty": "Jetty bongkar",
+            "laytime_days": "Prorata total (hari)",
+            "laytime_load_days": "Prorata muat (hari)",
+            "laytime_discharge_days": "Prorata bongkar (hari)",
+            "demurrage_rate_idr": "Tarif demurrage (Rp/hari)",
+            "notes": "Catatan",
+        }
+        help_texts = {
+            "laytime_days": "Isi total saja, atau isi muat + bongkar (total dihitung sendiri)",
+            "demurrage_rate_idr": "Kosongkan bila kontrak menulis “-”",
+        }
+        widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
+
+    def clean(self):
+        cleaned = super().clean()
+        load = cleaned.get("laytime_load_days")
+        discharge = cleaned.get("laytime_discharge_days")
+        total = cleaned.get("laytime_days")
+        if (load is None) != (discharge is None):
+            self.add_error(
+                "laytime_load_days" if load is None else "laytime_discharge_days",
+                "Prorata terpisah harus diisi keduanya (muat dan bongkar).",
+            )
+        elif load is not None and discharge is not None:
+            if total is None:
+                cleaned["laytime_days"] = load + discharge
+            elif total != load + discharge:
+                self.add_error(
+                    "laytime_days",
+                    f"Total {total} tidak sama dengan muat + bongkar ({load + discharge}).",
+                )
+        return cleaned
+
+
+ParcelFormSet = inlineformset_factory(
+    Voyage,
+    Parcel,
+    fields=["commodity", "quantity_mt", "load_jetty", "shipper"],
+    labels={
+        "commodity": "Komoditas",
+        "quantity_mt": "Jumlah (MT)",
+        "load_jetty": "Jetty muat",
+        "shipper": "Pengirim",
+    },
+    extra=2,
+    can_delete=True,
+)
 
 
 class ActivityForm(forms.ModelForm):

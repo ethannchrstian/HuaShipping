@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{% url 'rekap' %}">Rekap voyage</a> / {{ title }}</p>
+<div class="page-head">
+  <h1>{{ title }}</h1>
+  <p class="lead">Semua tanggal dan hari dihitung dari catatan kegiatan — di sini cukup data kontraknya.</p>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <section class="card">
+    <h2>Voyage</h2>
+    {% for e in form.non_field_errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+    <div class="form-grid">
+      {% for field in form %}
+        {% if field.name != "notes" %}
+        <div class="field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<p class="hint">{{ field.help_text }}</p>{% endif %}
+          {% for e in field.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="field">
+      <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+      {{ form.notes }}
+      {% for e in form.notes.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Muatan</h2>
+    <p class="hint hint-top">Satu baris per muatan. Baris kosong diabaikan.</p>
+    {{ formset.management_form }}
+    {% for e in formset.non_form_errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+    {% for pform in formset %}
+      <div class="parcel-row">
+        {% for hidden in pform.hidden_fields %}{{ hidden }}{% endfor %}
+        <div class="form-grid parcel-grid">
+          {% for field in pform.visible_fields %}
+            <div class="field {% if field.name == 'DELETE' %}field-delete{% endif %}">
+              <label for="{{ field.id_for_label }}">{% if field.name == 'DELETE' %}Hapus baris ini{% else %}{{ field.label }}{% endif %}</label>
+              {{ field }}
+              {% for e in field.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Simpan voyage</button>
+    <a class="btn btn-secondary" href="{% if voyage %}{% url 'voyage_detail' voyage.pk %}{% else %}{% url 'rekap' %}{% endif %}">Batal</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Rekap voyage{% endblock %}
 {% block content %}
-<div class="page-head">
-  <h1>Rekap voyage</h1>
-  <p class="lead">Semua perjalanan kedua kapal. Klik kode voyage untuk melihat rincian dan mencatat kegiatan.</p>
+<div class="page-head page-head-actions">
+  <div>
+    <h1>Rekap voyage</h1>
+    <p class="lead">Semua perjalanan kedua kapal. Klik kode voyage untuk melihat rincian dan mencatat kegiatan.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'voyage_create' %}">+ Voyage baru</a>
 </div>
 
 <section class="vessel-cards" aria-label="Posisi kapal saat ini">

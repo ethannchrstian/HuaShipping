@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{% url 'rekap' %}">Rekap voyage</a> / <a href="{% url 'voyage_detail' voyage.pk %}">{{ voyage.code }}</a></p>
+<div class="card confirm-card">
+  <h1>{{ title }}</h1>
+  <p>{{ body }}</p>
+  {% for c in cautions %}
+    <p class="confirm-caution">Perhatian: {{ c }}</p>
+  {% endfor %}
+  <form method="post" class="form-actions">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">{{ confirm_label }}</button>
+    <a class="btn btn-secondary" href="{% url 'voyage_detail' voyage.pk %}">Batal</a>
+  </form>
+</div>
+{% endblock %}

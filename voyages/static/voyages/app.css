@@ -228,6 +228,29 @@ input:hover, select:hover { border-color: var(--ink-faint); }
 .entry-row .btn { margin-top: 16px; }
 .entry-row input, .entry-row select { background: var(--card); }
 
+/* ---- forms (S4) & actions ---- */
+.page-head-actions { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 18px; margin-bottom: 14px; }
+.form-grid .field { margin-bottom: 0; }
+.form-actions { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+.parcel-row { border-top: 1px solid var(--line-soft); padding-top: 14px; margin-top: 14px; }
+.parcel-row:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+.field-delete { justify-content: flex-end; }
+.field-delete input { min-height: 0; width: 20px; height: 20px; align-self: flex-start; }
+.head-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.confirm-card { max-width: 560px; }
+.confirm-card h1 { margin-bottom: 12px; }
+.confirm-caution { background: var(--warn-bg); color: var(--warn-ink); padding: 10px 14px; border-radius: 8px; font-weight: 500; }
+.action-cell a { font-weight: 600; text-decoration: none; }
+.action-cell a:hover { text-decoration: underline; }
+.editing-row td { background: var(--sea-tint); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.delete-form { margin-top: 12px; border-top: 1px solid var(--line-soft); padding-top: 12px; }
+.btn-danger-ghost { color: var(--bad-ink); }
+.btn-danger-ghost:hover { color: var(--bad-ink); }
+.undo-form { display: inline; margin-left: 6px; }
+.undo-link { font-weight: 650; text-decoration: underline; color: inherit; }
+
 /* ---- login ---- */
 .login-page { display: grid; place-items: center; min-height: 100vh; padding: 16px; background: var(--paper); }
 .login-card { width: 100%; max-width: 400px; padding: 36px; }

@@ -25,3 +25,7 @@ Thumbs.db
 *.jpeg
 *.jpg
 prototype.html
+
+# Generated Word/PDF exports of docs (source of truth is the .md in docs/)
+*.docx
+*.pdf

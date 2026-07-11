@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Laporan{% endblock %}
+{% block container %}max-w-[1200px]{% endblock %}
+{% block content %}
+<style>
+  /* Chart palette — validated (dataviz six checks) against the white card surface. */
+  .viz { --c-muat: #2a78d6; --c-tunggu: #1baf7a; --c-bongkar: #eda100;
+         --c-berlayar: #008300; --c-lainnya: #d5d9e0;
+         --c-port: #4a3aa7; --c-idle: #e6e9ef; }
+  .seg-muat { background: var(--c-muat); } .seg-tunggu { background: var(--c-tunggu); }
+  .seg-bongkar { background: var(--c-bongkar); } .seg-berlayar { background: var(--c-berlayar); }
+  .seg-lainnya { background: var(--c-lainnya); }
+  .seg-port { background: var(--c-port); } .seg-idle { background: var(--c-idle); }
+</style>
+
+<div class="viz">
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-[24px] font-bold tracking-tight">Laporan</h1>
+    <p class="mt-1 text-[14px] text-ink-soft">Berdasarkan {{ n_voyages }} voyage tahun {{ year }} — semua angka dihitung ulang dari catatan kegiatan.</p>
+  </div>
+  <form method="get" class="w-32">
+    <label for="f-tahun" class="mb-1 block text-[12.5px] font-[550] text-ink-soft">Tahun</label>
+    <select name="tahun" id="f-tahun" onchange="this.form.requestSubmit()">
+      {% for y in years %}
+        <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+{# ---- 1. Ke mana waktu pergi ---- #}
+<section class="card mt-6 animate-rise p-5" aria-labelledby="judul-waktu">
+  <h2 id="judul-waktu" class="text-[16.5px] font-[650]">Ke mana waktu pergi</h2>
+  <p class="mt-0.5 text-[13px] text-ink-soft">Pembagian waktu setiap voyage dari kegiatan pertama sampai terakhir. Waktu tunggu ikut dihitung dalam laytime kontrak — di situlah demurrage lahir.</p>
+
+  <ul class="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px]" aria-label="Keterangan warna">
+    {% for l in breakdown.legend %}
+    <li class="inline-flex items-center gap-1.5">
+      <span aria-hidden="true" class="h-3 w-3 rounded seg-{{ l.key }}"></span>
+      {{ l.label }} <span class="text-ink-faint">· {{ l.days }} hari ({{ l.pct|floatformat:"0" }}%)</span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="mt-4 space-y-3">
+    {% for r in breakdown.rows %}
+    <div class="grid grid-cols-[110px_1fr_90px] items-center gap-3">
+      <a class="text-[13.5px] font-[600] text-action hover:underline" href="{% url 'voyage_detail' r.voyage.pk %}">{{ r.voyage.code }}<span class="block text-[11.5px] font-[450] text-ink-faint">{{ r.vessel_short }}</span></a>
+      <div class="flex h-6 w-full gap-[2px] overflow-hidden rounded-md bg-card">
+        {% for p in r.parts %}
+        <div class="seg-{{ p.key }} flex h-full items-center overflow-hidden"
+             style="flex: {{ p.pct_css }} 1 0"
+             title="{{ p.label }}: {{ p.dur }} ({{ p.pct|floatformat:'0' }}%)">
+          {% if p.pct > 14 %}<span class="mx-auto whitespace-nowrap px-1 text-[11px] font-[600] {% if p.key == 'lainnya' or p.key == 'bongkar' or p.key == 'tunggu' %}text-[#183028]{% else %}text-white{% endif %}">{{ p.days }} hr</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <span class="text-right text-[12.5px] tabular-nums text-ink-soft">{{ r.total_label }}{% if r.ongoing %}<span class="block text-[11px] text-info-ink">masih berjalan</span>{% endif %}</span>
+    </div>
+    {% empty %}
+    <p class="text-[14px] text-ink-soft">Belum ada voyage dengan kegiatan pada tahun ini.</p>
+    {% endfor %}
+  </div>
+
+  {% if breakdown.rows %}
+  <details class="mt-4 text-[13.5px]">
+    <summary class="cursor-pointer font-[550] text-action">Lihat tabel angka</summary>
+    <div class="mt-2 overflow-x-auto">
+      <table class="w-full text-[13.5px]">
+        <thead><tr class="bg-[#f9fafb] text-left text-[11.5px] uppercase tracking-wider text-ink-soft">
+          <th class="px-3 py-2 font-[600]">Voyage</th>
+          {% for l in breakdown.legend %}<th class="px-3 py-2 text-right font-[600]">{{ l.label }}</th>{% endfor %}
+          <th class="px-3 py-2 text-right font-[600]">Total</th>
+        </tr></thead>
+        <tbody>
+          {% for r in breakdown.rows %}
+          <tr class="border-t border-line-soft">
+            <td class="px-3 py-2">{{ r.voyage.code }} ({{ r.vessel_short }})</td>
+            {% for p in r.parts_all %}<td class="px-3 py-2 text-right tabular-nums">{{ p }}</td>{% endfor %}
+            <td class="px-3 py-2 text-right font-[600] tabular-nums">{{ r.total_label }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% endif %}
+</section>
+
+<div class="mt-5 grid animate-rise gap-5 lg:grid-cols-2" style="animation-delay: 80ms">
+  {# ---- 2. Tunggu per pelabuhan ---- #}
+  <section class="card p-5" aria-labelledby="judul-jetty">
+    <h2 id="judul-jetty" class="text-[16.5px] font-[650]">Tunggu per pelabuhan</h2>
+    <p class="mt-0.5 text-[13px] text-ink-soft">Rata-rata waktu tunggu per kunjungan — pelabuhan mana yang paling lambat.</p>
+    <div class="mt-4 space-y-3">
+      {% for j in jetties %}
+      <div>
+        <div class="flex items-baseline justify-between gap-3 text-[13.5px]">
+          <span class="min-w-0 truncate font-[550]" title="{{ j.place }}">{{ j.place }}</span>
+          <span class="shrink-0 tabular-nums text-ink-soft">{{ j.avg_label }} <span class="text-ink-faint">/ kunjungan · {{ j.calls }}×</span></span>
+        </div>
+        <div class="mt-1 h-4 overflow-hidden rounded bg-card">
+          <div class="seg-tunggu h-full rounded" style="width: {{ j.pct_css }}%" title="Total tunggu: {{ j.total_label }} dalam {{ j.calls }} kunjungan"></div>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-[14px] text-ink-soft">Belum ada waktu tunggu tercatat tahun ini.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ---- 3. Demurrage per pencharter ---- #}
+  <section class="card overflow-hidden p-5" aria-labelledby="judul-pencharter">
+    <h2 id="judul-pencharter" class="text-[16.5px] font-[650]">Demurrage per pencharter</h2>
+    <p class="mt-0.5 text-[13px] text-ink-soft">Hari lebih dari kontrak dan estimasi tagihannya, menurut tarif kontrak.</p>
+    <div class="mt-4 overflow-x-auto">
+      <table class="w-full text-[13.5px]">
+        <thead><tr class="bg-[#f9fafb] text-left text-[11.5px] uppercase tracking-wider text-ink-soft">
+          <th class="px-3 py-2 font-[600]">Pencharter</th>
+          <th class="px-3 py-2 text-right font-[600]">Voyage</th>
+          <th class="px-3 py-2 text-right font-[600]">MT</th>
+          <th class="px-3 py-2 text-right font-[600]">Hari lebih</th>
+          <th class="px-3 py-2 text-right font-[600]">Hari demurrage</th>
+          <th class="px-3 py-2 text-right font-[600]">Estimasi (Rp)</th>
+        </tr></thead>
+        <tbody>
+          {% for c in charterers %}
+          <tr class="border-t border-line-soft">
+            <td class="px-3 py-2.5 font-[550]">{{ c.charterer }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ c.n }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ c.mt }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums {% if c.over %}font-[600] text-bad-ink{% endif %}">{{ c.over }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ c.dem_days }}</td>
+            <td class="px-3 py-2.5 text-right font-[600] tabular-nums">{{ c.dem_rp }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="px-3 py-6 text-center text-ink-soft">Belum ada data tahun ini.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-3 text-[12.5px] text-ink-faint">Hari demurrage hanya dihitung bila kontraknya punya tarif; “hari lebih” dihitung untuk semua.</p>
+  </section>
+</div>
+
+{# ---- 4. Pemakaian kapal per bulan ---- #}
+<section class="card mt-5 animate-rise p-5" style="animation-delay: 160ms" aria-labelledby="judul-kapal">
+  <h2 id="judul-kapal" class="text-[16.5px] font-[650]">Pemakaian kapal per bulan {{ year }}</h2>
+  <p class="mt-0.5 text-[13px] text-ink-soft">Hari berlayar, di pelabuhan, dan menganggur per bulan (bulan berjalan dihitung sampai hari ini).</p>
+
+  <ul class="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px]" aria-label="Keterangan warna">
+    <li class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="h-3 w-3 rounded seg-berlayar"></span> Berlayar</li>
+    <li class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="h-3 w-3 rounded seg-port"></span> Di pelabuhan</li>
+    <li class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="h-3 w-3 rounded border border-line seg-idle"></span> Menganggur</li>
+  </ul>
+
+  <div class="mt-5 grid gap-8 lg:grid-cols-2">
+    {% for u in utilization %}
+    <div>
+      <h3 class="text-[14px] font-[600]">{{ u.vessel.tug_name }}</h3>
+      <div class="mt-3 flex items-end gap-2" style="height: 120px" role="img" aria-label="Pemakaian {{ u.vessel.tug_name }} per bulan">
+        {% for m in u.months %}
+        <div class="flex h-full flex-1 flex-col justify-end gap-[2px]"
+             {% if not m.future %}title="{{ month_names|slice:m.month|last }}: berlayar {{ m.sail_days }} hr, pelabuhan {{ m.port_days }} hr, menganggur {{ m.idle_days }} hr"{% endif %}>
+          {% if not m.future %}
+            <div class="seg-idle w-full rounded-t" style="flex: {{ m.idle_css }} 1 0"></div>
+            <div class="seg-port w-full" style="flex: {{ m.port_css }} 1 0"></div>
+            <div class="seg-berlayar w-full rounded-b-[2px]" style="flex: {{ m.sail_css }} 1 0"></div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mt-1.5 flex gap-2 text-center text-[10.5px] text-ink-faint">
+        {% for m in u.months %}<span class="flex-1 {% if m.future %}opacity-40{% endif %}">{{ month_names|slice:m.month|last }}</span>{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+</div>
+{% endblock %}

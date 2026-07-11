@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.views.decorators.http import require_POST
 
-from . import presenters
+from . import presenters, reports
 from .forms import NEXT_TYPE, ActivityForm, ParcelFormSet, VoyageForm, next_code
 from .models import Activity, Charterer, Jetty, Vessel, Voyage
 
@@ -93,6 +93,36 @@ def voyage_list(request):
         "filters": f,
     }
     return render(request, "voyages/voyage_list.html", context)
+
+
+@login_required
+def laporan(request):
+    voyages = Voyage.objects.select_related("vessel", "charterer", "discharge_jetty").prefetch_related(
+        "activities__activity_type", "parcels__load_jetty"
+    )
+    years = sorted(
+        {y for v in voyages if (y := presenters.voyage_year(v)) is not None}, reverse=True
+    )
+    current = timezone.localtime().year
+    try:
+        year = int(request.GET.get("tahun", ""))
+    except ValueError:
+        year = current
+    if year not in years and years:
+        year = years[0] if current not in years else current
+    vessels = Vessel.objects.filter(active=True).prefetch_related("voyages__activities__activity_type")
+    n_voyages = sum(1 for v in voyages if presenters.voyage_year(v) == year)
+    context = {
+        "year": year,
+        "years": years,
+        "n_voyages": n_voyages,
+        "breakdown": reports.time_breakdown(voyages, year),
+        "jetties": reports.jetty_waiting(voyages, year),
+        "charterers": reports.charterer_demurrage(voyages, year),
+        "utilization": reports.utilization(vessels, year),
+        "month_names": reports.MONTH_SHORT,
+    }
+    return render(request, "voyages/laporan.html", context)
 
 
 @login_required

@@ -104,6 +104,27 @@ bottom:
 Completed voyages are **locked**: no entry form, and any attempt to change
 them is refused with a message. Unlocking (later feature) will be logged.
 
+## Screen — Laporan (analytics)
+
+Four questions, one page, filterable by year. Every figure is recomputed from
+the activity logs; nothing is stored or invented:
+
+1. **Ke mana waktu pergi** — one stacked bar per voyage: Muat / Tunggu /
+   Bongkar / Berlayar / Lainnya. Waiting counts toward laytime under the
+   company's convention, so the teal *Tunggu* segments are literally where
+   demurrage comes from. A "Lihat tabel angka" link shows the exact numbers.
+2. **Tunggu per pelabuhan** — average waiting per call, worst first —
+   negotiating ammunition against slow jetties.
+3. **Demurrage per pencharter** — voyages, MT, over-contract days, and the
+   rupiah estimate per charterer.
+4. **Pemakaian kapal per bulan** — sailing / in-port / idle days per vessel
+   per month; the current month counts up to today, future months stay empty.
+
+Data honesty notes: open-ended activities count as "running" only on ongoing
+voyages (on completed voyages an open end is an imported, flagged sheet error
+and is excluded); with ~10 voyages a year the page shows per-voyage bars, not
+trend lines.
+
 ## Data master
 
 The sidebar's *Data master* opens Django's built-in admin — vessel/jetty/

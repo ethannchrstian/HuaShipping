@@ -23,40 +23,45 @@ created by the admin (you), which is the security model the company chose
 plain-Indonesian error, deliberately not saying *which* field was wrong
 (standard practice: don't help someone guessing usernames).
 
-## Screen 2 — Ringkasan (the dashboard, home page)
+## Screen 2 — Ringkasan operasional (the dashboard, home page)
 
-Reading order, top to bottom — arranged so the most-asked question is answered
-first:
+A wide (up to 1600px) operations layout with labeled sections, reading top to
+bottom:
 
-1. **Greeting header** — time-of-day greeting with today's date, and the
-   *Voyage baru* button on the right.
-2. **Vessel hero cards** — one per tugboat set, always "now" (they ignore the
-   filters below). Each card answers "where is my boat": the current voyage
-   code (click it to open), a status chip, a **route line** (load port on the
-   left, discharge port on the right, a sailboat marker positioned along it by
-   phase — it gently bobs while a voyage is running), a three-step phase
-   tracker **Muat → Berlayar → Bongkar** with the current step highlighted,
-   the exact activity happening ("Sedang: Kegiatan bongkar"), and days at
-   port versus the contract with a progress bar (green within contract, red
-   over).
-3. **Perlu perhatian** — the alerts panel. Everything in it is derived from
-   real data on *ongoing* voyages only: over-contract days, gap/overlap
-   findings in the activity log, an activity left running suspiciously long,
-   or missing contract laytime. Each alert links to its voyage. Empty state
-   says "Semua beres".
-4. **The number band** — four year-scoped figures: voyages running now,
-   demurrage days this year, the rupiah estimate of that demurrage, and MT
-   carried this year. Each shows last year's figure underneath for honest
-   comparison — the period is always written out so a number is never
-   ambiguous.
-5. **Filters** — vessel, status, year (these apply instantly on change) and a
-   search box (voyage code, contract, kwitansi, charterer — press Enter).
-6. **The voyage table** — one row per voyage, paginated at 10. The column
-   worth explaining is **"Hari pelabuhan / kontrak"**: actual days in port
-   versus the contract's allowed days (laytime), with a mini progress bar.
-   When actual exceeds allowed, a red badge says "+N hari lebih" — color
-   never carries meaning alone, so it works for color-blind users and in a
-   black-and-white print. Every row also ends with a *Lihat* link.
+1. **Page header** — title, today's date, **"Data terakhir diubah …"** (the
+   newest entry in the audit trail, so everyone knows how fresh the numbers
+   are), and the quick actions *Data master* and *Voyage baru*.
+2. **Voyage aktif** — one hero card per tugboat set, always "now" (they
+   ignore the filters below). The voyage code is the biggest thing on the
+   card (click it to open); the vessel names sit under it as secondary text.
+   Then the **route line** (load port left, discharge port right, a sailboat
+   marker positioned along it by phase — it bobs while the voyage runs), the
+   **Muat → Berlayar → Bongkar** tracker with the current step highlighted,
+   and a grouped detail list: current activity, and days at port versus
+   contract with a progress bar (green within contract, red over).
+3. **Pusat tindakan** — the action center, beside the cards on big screens.
+   Each item is a priority card with a colored left edge and a severity chip
+   — **Mendesak** (red, over contract), **Periksa** (amber, gap/overlap
+   found), **Info** (blue, e.g. an activity running suspiciously long or a
+   missing contract laytime) — plus a **"Buka V26xx"** button straight to the
+   voyage. Everything is derived from real data on *ongoing* voyages only;
+   the empty state says "Semua beres".
+4. **KPI operasional** — four year-scoped stat cards with colored icon tiles
+   and **trend arrows** against last year (a red ↑ on demurrage days is bad;
+   a green ↑ on MT carried is good — the color follows the meaning, not the
+   direction): voyages running now, demurrage days this year, the rupiah
+   estimate of that demurrage, and MT carried this year.
+5. **Semua voyage — filters** — search (code, contract, kwitansi, charterer),
+   vessel, status, **pencharter**, **pelabuhan/jetty**, and a **date range**
+   (Mulai dari / Sampai). Changing any filter updates *only the table* below
+   — the page does not reload (HTMX swaps just that section, and the address
+   bar still updates so a filtered view can be bookmarked or shared).
+6. **The voyage table** — Voyage code first, one row per voyage, paginated at
+   10. Routes show origin ◉ → destination ⌖ with the port names written out.
+   **"Hari pelabuhan / kontrak"**: actual days in port versus the contract's
+   allowed days, with a mini progress bar; over-contract rows get a red
+   "+N hari lebih" badge — color never carries meaning alone. The **whole row
+   is clickable** (the voyage code stays a real link for keyboard users).
 
 ## Screen 3 — Detail voyage
 

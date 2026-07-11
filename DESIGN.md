@@ -1,4 +1,4 @@
-# DESIGN — Visual identity (v4)
+# DESIGN — Visual identity (v5)
 
 Governed by PRODUCT.md ("tenang, jelas, terpercaya") and the binding UI rules
 in docs/06-screens.md. prototype.html remains an anti-reference.
@@ -8,6 +8,18 @@ reference mockup (`inspo.png`, local only), deliberately *not* copied 1:1 —
 see "Deviations" below. Brand navy is sampled from the company logo.
 Standing rule: **no styling ships without being looked at** — screenshot via
 Playwright (`scratchpad/shoot.py` flow), inspect, iterate.
+
+**v5 (2026-07-11, enterprise pass):** dashboard widened to a 1600px
+operations layout with uppercase section headers (Voyage aktif / Pusat
+tindakan / KPI operasional / Semua voyage); greeting replaced by a functional
+header (title, date, "Data terakhir diubah" from the audit trail, quick
+actions); action center = priority cards with severity chips + "Buka V26xx"
+buttons; KPI cards get colored icon tiles + trend arrows vs last year (color
+follows meaning: red ↑ demurrage, green ↑ tonnage); filters expanded
+(pencharter, pelabuhan/jetty, date range) and swap **only the table** via
+self-hosted HTMX (`hx-select` on the same URL — no partial templates, URL
+stays shareable); table rows fully clickable with the code link kept for
+keyboard. Other screens stay at 1160px via the `container` template block.
 
 ## Build (Tailwind v4, standalone CLI — no Node)
 

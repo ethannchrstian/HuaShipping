@@ -208,6 +208,10 @@
   .message-error   { border-color: #f2b8b0; background: var(--color-bad-bg); color: var(--color-bad-ink); }
   .message-warning { border-color: #f4d7a3; background: var(--color-live-bg); color: var(--color-live-ink); }
 
+  /* HTMX partial updates: dim the table while a filter request is in flight */
+  #tabel-voyage.htmx-request { opacity: 0.45; }
+  .row-klik { cursor: pointer; }
+
   /* Undo control injected into flash HTML by views.activity_delete */
   .undo-form { display: inline; margin-left: 8px; }
   .btn-ghost {

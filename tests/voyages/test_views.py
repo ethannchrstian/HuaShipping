@@ -61,6 +61,21 @@ class TestVoyageList:
         html = admin.get("/?cari=PSCOI").content.decode()
         assert "V2602" in html and "V2605" not in html
 
+    def test_filter_by_charterer(self, admin, data):
+        pnlf = voyage("Navigator 1", "V2605").charterer_id
+        html = admin.get(f"/?pencharter={pnlf}").content.decode()
+        assert "V2605" in html and "V2602" not in html
+
+    def test_filter_by_date_range(self, admin, data):
+        # only V2501 starts in Dec 2025
+        html = admin.get("/?mulai_dari=2025-12-01&mulai_sampai=2025-12-31").content.decode()
+        assert "V2501" in html
+        assert "dari 1 voyage" in html
+
+    def test_invalid_date_ignored(self, admin, data):
+        response = admin.get("/?mulai_dari=bukan-tanggal")
+        assert response.status_code == 200
+
     def test_over_laytime_marked_with_word_not_just_color(self, admin, data):
         # binding rule 5: color never carries meaning alone
         html = admin.get("/").content.decode()

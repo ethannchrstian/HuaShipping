@@ -6,6 +6,7 @@
   <title>{% block title %}Hua Shipping{% endblock %} — Pencatatan Voyage</title>
   <link rel="icon" type="image/png" href="{% static 'voyages/logo.png' %}">
   <link rel="stylesheet" href="{% static 'voyages/app.css' %}">
+  <script src="{% static 'voyages/htmx.min.js' %}" defer></script>
 </head>
 <body>
 <div class="flex min-h-screen flex-col lg:flex-row">
@@ -44,8 +45,8 @@
       </div>
     </div>
   </aside>
-  <main class="flex-1 px-5 pb-16 pt-7 lg:px-12 lg:pt-9">
-    <div class="mx-auto max-w-[1160px]">
+  <main class="flex-1 px-5 pb-16 pt-7 lg:px-10 lg:pt-8">
+    <div class="mx-auto {% block container %}max-w-[1160px]{% endblock %}">
       {% if messages %}
         <div class="mb-6 space-y-2" role="status">
           {% for message in messages %}

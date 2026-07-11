@@ -147,11 +147,14 @@ def list_rows(voyages) -> list[dict]:
         port = total_port_time(acts)
         start = acts[0].start_at if acts else None
         laytime = int(v.laytime_days) if v.laytime_days is not None else None
+        frm, to = route_ends(v)
         rows.append(
             {
                 "voyage": v,
                 "vessel_short": v.vessel.tug_name.replace("TB. HUA ", ""),
                 "route": route(v),
+                "route_from": frm,
+                "route_to": to,
                 "start": start,
                 "port_days": port.days if port else 0,
                 "laytime": laytime,
@@ -250,16 +253,26 @@ def kpis(voyages, year: int) -> dict:
         b["mt"] += sum(p.quantity_mt for p in v.parcels.all())
     empty = {"dem_days": 0, "dem_idr": 0, "mt": 0}
     now_b, prev_b = per_year.get(year, empty), per_year.get(year - 1, empty)
+
+    def trend(now_v, prev_v):
+        if now_v > prev_v:
+            return "up"
+        return "down" if now_v < prev_v else "flat"
+
     return {
         "year": year,
         "ongoing": ongoing,
         "dem_days": now_b["dem_days"],
         "dem_days_prev": prev_b["dem_days"],
+        "dem_trend": trend(now_b["dem_days"], prev_b["dem_days"]),
+        "dem_delta": abs(now_b["dem_days"] - prev_b["dem_days"]),
         "dem_amount": rupiah(now_b["dem_idr"]),
         "mt": int(now_b["mt"]),
         "mt_fmt": num_id(int(now_b["mt"])),
         "mt_prev": int(prev_b["mt"]),
         "mt_prev_fmt": num_id(int(prev_b["mt"])),
+        "mt_trend": trend(int(now_b["mt"]), int(prev_b["mt"])),
+        "mt_delta_fmt": num_id(abs(int(now_b["mt"]) - int(prev_b["mt"]))),
     }
 
 

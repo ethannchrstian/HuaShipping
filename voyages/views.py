@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -12,7 +14,7 @@ from django.views.decorators.http import require_POST
 
 from . import presenters
 from .forms import NEXT_TYPE, ActivityForm, ParcelFormSet, VoyageForm, next_code
-from .models import Activity, Vessel, Voyage
+from .models import Activity, Charterer, Jetty, Vessel, Voyage
 
 
 @login_required
@@ -20,17 +22,35 @@ def voyage_list(request):
     voyages = Voyage.objects.select_related("vessel", "charterer", "discharge_jetty").prefetch_related(
         "activities__activity_type", "parcels__load_jetty"
     )
-    vessel_id = request.GET.get("kapal") or ""
-    status = request.GET.get("status") or ""
-    year = request.GET.get("tahun") or ""
-    q = (request.GET.get("cari") or "").strip()
-    if vessel_id:
-        voyages = voyages.filter(vessel_id=vessel_id)
-    if status:
-        voyages = voyages.filter(status=status)
-    if year:
-        voyages = voyages.filter(code__startswith=f"V{year[-2:]}")
-    if q:
+    f = {
+        "kapal": request.GET.get("kapal") or "",
+        "status": request.GET.get("status") or "",
+        "pencharter": request.GET.get("pencharter") or "",
+        "pelabuhan": request.GET.get("pelabuhan") or "",
+        "mulai_dari": request.GET.get("mulai_dari") or "",
+        "mulai_sampai": request.GET.get("mulai_sampai") or "",
+        "cari": (request.GET.get("cari") or "").strip(),
+    }
+    if f["kapal"]:
+        voyages = voyages.filter(vessel_id=f["kapal"])
+    if f["status"]:
+        voyages = voyages.filter(status=f["status"])
+    if f["pencharter"]:
+        voyages = voyages.filter(charterer_id=f["pencharter"])
+    if f["pelabuhan"]:
+        voyages = voyages.filter(
+            Q(parcels__load_jetty_id=f["pelabuhan"]) | Q(discharge_jetty_id=f["pelabuhan"])
+        ).distinct()
+    for key, lookup in (("mulai_dari", "gte"), ("mulai_sampai", "lte")):
+        if f[key]:
+            try:
+                parsed = datetime.date.fromisoformat(f[key])
+            except ValueError:
+                f[key] = ""
+                continue
+            voyages = voyages.filter(**{f"activities__start_at__date__{lookup}": parsed}).distinct()
+    if f["cari"]:
+        q = f["cari"]
         voyages = voyages.filter(
             Q(code__icontains=q) | Q(contract_no__icontains=q)
             | Q(invoice_no__icontains=q) | Q(charterer__code__icontains=q)
@@ -42,32 +62,30 @@ def voyage_list(request):
     filter_params.pop("hal", None)
 
     all_voyages = Voyage.objects.prefetch_related("activities__activity_type", "parcels")
-    years = sorted({f"20{v.code[1:3]}" for v in all_voyages if len(v.code) >= 3}, reverse=True)
-    now = timezone.localtime()
     context = {
         "page": page,
         "filter_qs": filter_params.urlencode(),
-        "greeting": _greeting(now.hour),
-        "today": now,
+        "today": timezone.localtime(),
+        "last_update": _last_update(),
         "cards": presenters.vessel_cards(Vessel.objects.filter(active=True)),
-        "kpis": presenters.kpis(all_voyages, year=now.year),
+        "kpis": presenters.kpis(all_voyages, year=timezone.localtime().year),
         "alerts": presenters.alerts(all_voyages),
         "vessels": Vessel.objects.filter(active=True),
-        "years": years,
+        "charterers": Charterer.objects.order_by("code"),
+        "jetties": Jetty.objects.order_by("name"),
         "statuses": Voyage.Status.choices,
-        "filters": {"kapal": vessel_id, "status": status, "tahun": year, "cari": q},
+        "filters": f,
     }
     return render(request, "voyages/voyage_list.html", context)
 
 
-def _greeting(hour: int) -> str:
-    if hour < 11:
-        return "Selamat pagi"
-    if hour < 15:
-        return "Selamat siang"
-    if hour < 19:
-        return "Selamat sore"
-    return "Selamat malam"
+def _last_update():
+    """When data last changed (newest audit-trail entry), shown as 'sync' time."""
+    stamps = [
+        m.history.order_by("-history_date").values_list("history_date", flat=True).first()
+        for m in (Activity, Voyage)
+    ]
+    return max((s for s in stamps if s), default=None)
 
 
 def _detail_context(request, voyage, form=None, editing_activity=None):

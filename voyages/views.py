@@ -1,10 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
 from django.views.decorators.http import require_POST
 
@@ -35,12 +37,21 @@ def voyage_list(request):
         )
 
     rows = presenters.list_rows(voyages)
+    page = Paginator(rows, 10).get_page(request.GET.get("hal"))
+    filter_params = request.GET.copy()
+    filter_params.pop("hal", None)
+
     all_voyages = Voyage.objects.prefetch_related("activities__activity_type", "parcels")
     years = sorted({f"20{v.code[1:3]}" for v in all_voyages if len(v.code) >= 3}, reverse=True)
+    now = timezone.localtime()
     context = {
-        "rows": rows,
+        "page": page,
+        "filter_qs": filter_params.urlencode(),
+        "greeting": _greeting(now.hour),
+        "today": now,
         "cards": presenters.vessel_cards(Vessel.objects.filter(active=True)),
-        "kpis": _kpis(all_voyages),
+        "kpis": presenters.kpis(all_voyages, year=now.year),
+        "alerts": presenters.alerts(all_voyages),
         "vessels": Vessel.objects.filter(active=True),
         "years": years,
         "statuses": Voyage.Status.choices,
@@ -49,22 +60,14 @@ def voyage_list(request):
     return render(request, "voyages/voyage_list.html", context)
 
 
-def _kpis(voyages) -> dict:
-    from domain.calculations import demurrage_days, total_port_time
-
-    ongoing = port_days = dem_days = mt = 0
-    for v in voyages:
-        acts = v.domain_activities()
-        port = total_port_time(acts)
-        if v.status == Voyage.Status.ONGOING:
-            ongoing += 1
-        if port:
-            port_days += port.days
-        laytime = int(v.laytime_days) if v.laytime_days is not None else None
-        if v.demurrage_rate_idr:  # counted only when a rate exists (calc spec C6)
-            dem_days += demurrage_days(port, laytime) or 0
-        mt += sum(p.quantity_mt for p in v.parcels.all())
-    return {"ongoing": ongoing, "port_days": port_days, "dem_days": dem_days, "mt": int(mt)}
+def _greeting(hour: int) -> str:
+    if hour < 11:
+        return "Selamat pagi"
+    if hour < 15:
+        return "Selamat siang"
+    if hour < 19:
+        return "Selamat sore"
+    return "Selamat malam"
 
 
 def _detail_context(request, voyage, form=None, editing_activity=None):

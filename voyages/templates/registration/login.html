@@ -4,29 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Masuk — Hua Shipping</title>
+  <link rel="icon" type="image/png" href="{% static 'voyages/logo.png' %}">
   <link rel="stylesheet" href="{% static 'voyages/app.css' %}">
 </head>
-<body class="login-page">
-  <main class="login-card card">
-    <h1 class="brand-name">Hua Shipping</h1>
-    <p class="brand-sub">Pencatatan voyage — masuk untuk melanjutkan</p>
+<body class="flex min-h-screen items-center justify-center bg-brand px-5">
+  <main class="card w-full max-w-sm animate-rise p-7">
+    <div class="flex flex-col items-center text-center">
+      <img src="{% static 'voyages/logo.png' %}" alt="Logo Hua Shipping" class="h-14 w-auto">
+      <h1 class="mt-4 text-[20px] font-bold tracking-tight">Hua Shipping</h1>
+      <p class="mt-1 text-[14px] text-ink-soft">Pencatatan voyage — masuk untuk melanjutkan</p>
+    </div>
     {% if form.errors %}
-      <div class="field-error" role="alert">Nama pengguna atau kata sandi salah. Coba lagi.</div>
+      <div class="mt-4 rounded-lg bg-bad-bg px-4 py-3 text-[14px] font-[550] text-bad-ink" role="alert">Nama pengguna atau kata sandi salah. Coba lagi.</div>
     {% endif %}
-    <form method="post">
+    <form method="post" class="mt-5">
       {% csrf_token %}
-      <div class="field">
-        <label for="id_username">Nama pengguna</label>
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="id_username">Nama pengguna</label>
         <input type="text" name="username" id="id_username" autofocus autocomplete="username" required>
       </div>
-      <div class="field">
-        <label for="id_password">Kata sandi</label>
+      <div class="mt-4">
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="id_password">Kata sandi</label>
         <input type="password" name="password" id="id_password" autocomplete="current-password" required>
       </div>
-      <button type="submit" class="btn btn-primary btn-wide">Masuk</button>
+      <button type="submit" class="btn btn-primary mt-5 w-full justify-center">Masuk</button>
       <input type="hidden" name="next" value="{{ next }}">
     </form>
-    <p class="hint">Belum punya akun? Hubungi admin kantor.</p>
+    <p class="mt-4 text-center text-[13px] text-ink-faint">Belum punya akun? Hubungi admin kantor.</p>
   </main>
 </body>
 </html>

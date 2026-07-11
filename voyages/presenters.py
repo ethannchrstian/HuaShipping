@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from django.utils import timezone
+
 from domain.calculations import (
     SheetPair,
     activity_duration,
@@ -38,8 +40,13 @@ def pair_id(sp: SheetPair) -> str:
     return f"{sp.days} | {dur_id(sp.time)}"
 
 
+def num_id(n: int) -> str:
+    """40130 -> '40.130' (Indonesian thousand separators)."""
+    return f"{n:,}".replace(",", ".")
+
+
 def rupiah(amount: int) -> str:
-    return f"Rp {amount:,}".replace(",", ".")
+    return f"Rp {num_id(amount)}"
 
 
 def warning_text(w) -> str:
@@ -116,15 +123,21 @@ def summary(voyage: Voyage) -> dict:
     }
 
 
-def route(voyage: Voyage) -> str:
+def route_ends(voyage: Voyage) -> tuple[str | None, str | None]:
+    """Short names of the load jetty and discharge jetty (None when unknown)."""
     parcels = list(voyage.parcels.select_related("load_jetty"))
     frm = parcels[0].load_jetty if parcels else None
     to = voyage.discharge_jetty
     def short(j):
-        return (j.port or j.name) if j else "?"
+        return (j.port or j.name) if j else None
+    return short(frm), short(to)
+
+
+def route(voyage: Voyage) -> str:
+    frm, to = route_ends(voyage)
     if frm is None and to is None:
         return "—"
-    return f"{short(frm)} → {short(to)}"
+    return f"{frm or '?'} → {to or '?'}"
 
 
 def list_rows(voyages) -> list[dict]:
@@ -144,12 +157,30 @@ def list_rows(voyages) -> list[dict]:
                 "laytime": laytime,
                 "over": port is not None and laytime is not None and port.days > laytime,
                 "over_days": (port.days - laytime) if port is not None and laytime is not None else 0,
+                "bar_pct": (
+                    min(round((port.days if port else 0) / laytime * 100), 100) if laytime else None
+                ),
             }
         )
     return rows
 
 
+PHASE_STEPS = ("Muat", "Berlayar", "Bongkar")
+
+# activity_type.phase -> (tracker step index, vessel-marker % along the route line)
+PHASE_TRACK = {
+    "ballast": (0, 6),
+    "waiting_load": (0, 14),
+    "load": (0, 22),
+    "laden": (1, 50),
+    "waiting_discharge": (2, 78),
+    "discharge": (2, 86),
+    "prep": (2, 94),
+}
+
+
 def vessel_cards(vessels) -> list[dict]:
+    """One hero card per vessel set: latest voyage, route line, phase tracker."""
     cards = []
     for vessel in vessels:
         v = vessel.voyages.order_by("code").last()
@@ -157,13 +188,138 @@ def vessel_cards(vessels) -> list[dict]:
             continue
         last = v.activities.select_related("activity_type").last()
         port = total_port_time(v.domain_activities())
+        port_days = port.days if port else 0
+        laytime = int(v.laytime_days) if v.laytime_days is not None else None
+        done = v.status != Voyage.Status.ONGOING
+        step, marker = PHASE_TRACK.get(last.activity_type.phase, (0, 4)) if last else (0, 4)
+        if done:
+            step, marker = len(PHASE_STEPS) - 1, 100
+        steps = [
+            {
+                "label": label,
+                "state": "done" if (done or i < step) else ("current" if i == step else "todo"),
+            }
+            for i, label in enumerate(PHASE_STEPS)
+        ]
+        frm, to = route_ends(v)
+        over = laytime is not None and port_days > laytime
         cards.append(
             {
                 "vessel": vessel,
                 "voyage": v,
                 "phase": last.activity_type.label_id if last else "—",
                 "phase_ongoing": last is not None and last.end_at is None,
-                "port_days": port.days if port else 0,
+                "steps": steps,
+                "marker_pct": marker,
+                "route_known": frm is not None or to is not None,
+                "route_from": frm or "?",
+                "route_to": to or "?",
+                "port_days": port_days,
+                "laytime": laytime,
+                "over": over,
+                "over_days": (port_days - laytime) if over else 0,
+                "progress_pct": min(round(port_days / laytime * 100), 100) if laytime else None,
             }
         )
     return cards
+
+
+def voyage_year(v: Voyage) -> int | None:
+    """V2601 -> 2026 (voyages are attributed to years by their code)."""
+    if len(v.code) >= 3 and v.code[1:3].isdigit():
+        return 2000 + int(v.code[1:3])
+    return None
+
+
+def kpis(voyages, year: int) -> dict:
+    """Dashboard stat tiles, scoped to `year` with last year as honest comparison."""
+    ongoing = 0
+    per_year: dict[int, dict] = {}
+    for v in voyages:
+        if v.status == Voyage.Status.ONGOING:
+            ongoing += 1
+        vy = voyage_year(v)
+        if vy is None:
+            continue
+        b = per_year.setdefault(vy, {"dem_days": 0, "dem_idr": 0, "mt": 0})
+        port = total_port_time(v.domain_activities())
+        laytime = int(v.laytime_days) if v.laytime_days is not None else None
+        if v.demurrage_rate_idr:  # counted only when a rate exists (calc spec C6)
+            b["dem_days"] += demurrage_days(port, laytime) or 0
+            b["dem_idr"] += demurrage_amount_idr(port, laytime, v.demurrage_rate_idr) or 0
+        b["mt"] += sum(p.quantity_mt for p in v.parcels.all())
+    empty = {"dem_days": 0, "dem_idr": 0, "mt": 0}
+    now_b, prev_b = per_year.get(year, empty), per_year.get(year - 1, empty)
+    return {
+        "year": year,
+        "ongoing": ongoing,
+        "dem_days": now_b["dem_days"],
+        "dem_days_prev": prev_b["dem_days"],
+        "dem_amount": rupiah(now_b["dem_idr"]),
+        "mt": int(now_b["mt"]),
+        "mt_fmt": num_id(int(now_b["mt"])),
+        "mt_prev": int(prev_b["mt"]),
+        "mt_prev_fmt": num_id(int(prev_b["mt"])),
+    }
+
+
+def alerts(voyages) -> list[dict]:
+    """'Perlu perhatian' panel — actionable findings on ongoing voyages only.
+
+    Each item: kind (bad/warn/info), voyage, and a plain Indonesian sentence.
+    """
+    items = []
+    for v in voyages:
+        if v.status != Voyage.Status.ONGOING:
+            continue
+        acts = v.domain_activities()
+        port = total_port_time(acts)
+        laytime = int(v.laytime_days) if v.laytime_days is not None else None
+        if laytime is not None and port is not None and port.days > laytime:
+            items.append(
+                {
+                    "kind": "bad",
+                    "voyage": v,
+                    "text": (
+                        f"{v.code} sudah {port.days - laytime} hari melebihi kontrak "
+                        f"({port.days} / {laytime} hari)."
+                    ),
+                }
+            )
+        n_warns = len(log_warnings(acts))
+        if n_warns:
+            items.append(
+                {
+                    "kind": "warn",
+                    "voyage": v,
+                    "text": (
+                        f"Ada {n_warns} catatan waktu yang perlu diperiksa di {v.code} "
+                        f"(jeda atau tumpang tindih)."
+                    ),
+                }
+            )
+        last = v.activities.select_related("activity_type").last()
+        if last is not None and last.end_at is None:
+            running_days = (timezone.now() - last.start_at).days
+            if running_days >= 3:
+                items.append(
+                    {
+                        "kind": "info",
+                        "voyage": v,
+                        "text": (
+                            f"“{last.activity_type.label_id}” di {v.code} sudah berjalan "
+                            f"{running_days} hari — sudah selesai?"
+                        ),
+                    }
+                )
+        if laytime is None:
+            items.append(
+                {
+                    "kind": "info",
+                    "voyage": v,
+                    "text": f"{v.code} belum punya lama kontrak — lengkapi agar demurrage terhitung.",
+                }
+            )
+    order = {"bad": 0, "warn": 1, "info": 2}
+    items.sort(key=lambda a: order[a["kind"]])
+    return items[:5]

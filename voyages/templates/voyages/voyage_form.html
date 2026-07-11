@@ -1,50 +1,55 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-<p class="crumbs"><a href="{% url 'rekap' %}">Rekap voyage</a> / {{ title }}</p>
-<div class="page-head">
-  <h1>{{ title }}</h1>
-  <p class="lead">Semua tanggal dan hari dihitung dari catatan kegiatan — di sini cukup data kontraknya.</p>
+<p class="text-[14px] text-ink-soft"><a href="{% url 'rekap' %}" class="font-[550] text-action hover:underline">Ringkasan</a> <span class="text-ink-faint">/</span> {{ title }}</p>
+<div class="mt-3">
+  <h1 class="text-[26px] font-bold tracking-tight">{{ title }}</h1>
+  <p class="mt-1 text-[15px] text-ink-soft">Semua tanggal dan hari dihitung dari catatan kegiatan — di sini cukup data kontraknya.</p>
 </div>
 
-<form method="post" novalidate>
+<form method="post" novalidate class="mt-6">
   {% csrf_token %}
-  <section class="card">
-    <h2>Voyage</h2>
-    {% for e in form.non_field_errors %}<p class="field-error">{{ e }}</p>{% endfor %}
-    <div class="form-grid">
+  <section class="card animate-rise p-5">
+    <h2 class="text-[17px] font-[650]">Voyage</h2>
+    {% for e in form.non_field_errors %}<p class="mt-2 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {% for field in form %}
         {% if field.name != "notes" %}
-        <div class="field">
-          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}
-          {% if field.help_text %}<p class="hint">{{ field.help_text }}</p>{% endif %}
-          {% for e in field.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+          {% if field.help_text %}<p class="mt-1 text-[13px] text-ink-faint">{{ field.help_text }}</p>{% endif %}
+          {% for e in field.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
         </div>
         {% endif %}
       {% endfor %}
     </div>
-    <div class="field">
-      <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+    <div class="mt-4">
+      <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
       {{ form.notes }}
-      {% for e in form.notes.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+      {% for e in form.notes.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
     </div>
   </section>
 
-  <section class="card">
-    <h2>Muatan</h2>
-    <p class="hint hint-top">Satu baris per muatan. Baris kosong diabaikan.</p>
+  <section class="card mt-5 animate-rise p-5" style="animation-delay: 80ms">
+    <h2 class="text-[17px] font-[650]">Muatan</h2>
+    <p class="mt-1 text-[14px] text-ink-soft">Satu baris per muatan. Baris kosong diabaikan.</p>
     {{ formset.management_form }}
-    {% for e in formset.non_form_errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+    {% for e in formset.non_form_errors %}<p class="mt-2 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
     {% for pform in formset %}
-      <div class="parcel-row">
+      <div class="mt-4 rounded-lg border border-line-soft bg-[#f8fafc] p-4 first-of-type:mt-4">
         {% for hidden in pform.hidden_fields %}{{ hidden }}{% endfor %}
-        <div class="form-grid parcel-grid">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {% for field in pform.visible_fields %}
-            <div class="field {% if field.name == 'DELETE' %}field-delete{% endif %}">
-              <label for="{{ field.id_for_label }}">{% if field.name == 'DELETE' %}Hapus baris ini{% else %}{{ field.label }}{% endif %}</label>
-              {{ field }}
-              {% for e in field.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+            <div {% if field.name == 'DELETE' %}class="flex items-end gap-2 pb-2"{% endif %}>
+              {% if field.name == 'DELETE' %}
+                {{ field }}
+                <label class="text-[13.5px] font-[550] text-bad-ink" for="{{ field.id_for_label }}">Hapus baris ini</label>
+              {% else %}
+                <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+              {% endif %}
+              {% for e in field.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
             </div>
           {% endfor %}
         </div>
@@ -52,7 +57,7 @@
     {% endfor %}
   </section>
 
-  <div class="form-actions">
+  <div class="mt-5 flex items-center gap-2.5">
     <button type="submit" class="btn btn-primary">Simpan voyage</button>
     <a class="btn btn-secondary" href="{% if voyage %}{% url 'voyage_detail' voyage.pk %}{% else %}{% url 'rekap' %}{% endif %}">Batal</a>
   </div>

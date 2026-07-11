@@ -1,78 +1,84 @@
-# DESIGN — Visual identity (v3)
+# DESIGN — Visual identity (v4)
 
 Governed by PRODUCT.md ("tenang, jelas, terpercaya") and the binding UI rules
-in docs/06-screens.md. prototype.html remains an anti-reference (no emoji
-icons, no uppercase micro-labels, no gradients).
+in docs/06-screens.md. prototype.html remains an anti-reference.
 
-**v3 (2026-07-11):** redesigned against rendered screenshots and owner-chosen
-reference UIs (modern logistics dashboards). v1/v2's "borderless paper" look
-read as unstyled; the fix was a dark anchored sidebar, real elevation, and
-confident hierarchy. Rule learned the hard way: **no styling ships without
-being looked at** — screenshot via Playwright (`scratchpad/shoot.py` flow),
-inspect, iterate.
+**v4 (2026-07-11):** rebuilt on Tailwind CSS against an owner-supplied
+reference mockup (`inspo.png`, local only), deliberately *not* copied 1:1 —
+see "Deviations" below. Brand navy is sampled from the company logo.
+Standing rule: **no styling ships without being looked at** — screenshot via
+Playwright (`scratchpad/shoot.py` flow), inspect, iterate.
+
+## Build (Tailwind v4, standalone CLI — no Node)
+
+- Source of truth: `voyages/static/voyages/src/app.tailwind.css`
+  (`@theme` tokens + small `@layer components`). Templates carry utilities.
+- Built output `voyages/static/voyages/app.css` is **committed**; deploys and
+  CI never need the CLI.
+- CLI: `tools/tailwindcss.exe` (gitignored). Download:
+  <https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-windows-x64.exe>
+- Rebuild once:
+  `tools\tailwindcss.exe -i voyages\static\voyages\src\app.tailwind.css -o voyages\static\voyages\app.css --minify`
+- While designing: `dev css` (watch mode) alongside `dev`.
 
 ## Feel
 
-A calm, professional operations tool: dark navy sidebar anchoring the screen,
-white cards floating with soft shadows on a cool-gray canvas, one confident
-teal for actions, generous 44px targets. Numbers are the heroes.
+A calm, confident operations dashboard: brand-navy sidebar with the company
+logo on a white tile, white cards on a cool canvas, one action blue, statuses
+in emerald/amber/red always paired with Indonesian words. Numbers are the
+heroes; the signature element is each vessel card's **route line** with a
+sailboat marker positioned by voyage phase.
 
-## Type
-
-- **Inter** (self-hosted variable font, `static/voyages/fonts/`), fallback
-  Segoe UI. Base **16px**, tables **15px**, captions 13px, nothing under 12px.
-- Hierarchy by size *and* weight: page titles 28px/700 with tight tracking,
-  section titles 17px/650, values 650, labels 500 gray.
-- `font-variant-numeric: tabular-nums` everywhere numbers align.
-
-## Color
+## Tokens (in `@theme`)
 
 | Token | Value | Use |
 |---|---|---|
-| `--navy` | `#10273f` | sidebar background |
-| `--canvas` | `#eef1f5` | page background (cool gray) |
-| `--card` | `#ffffff` | cards, tables |
-| `--line / --line-soft` | `#e6e9ef / #eef0f4` | card edges, row separators |
-| `--ink / --ink-soft / --ink-faint` | `#1b2733 / #667085 / #98a2b3` | text tiers |
-| `--sea / --sea-deep / --sea-tint` | `#155e75 / #0e4256 / #e3eef2` | actions, links, ongoing |
-| `--ok-*` | `#e5f3e9 / #1e6b3a` | Selesai |
-| `--warn-*` | `#fdf3dd / #8a5a00` | W1 gap strips |
-| `--bad-*` | `#fdebe8 / #b42318` | W2 overlap, errors, demurrage |
-| `--shadow` | `0 1px 2px …05, 0 1px 3px …08` | card elevation |
+| `--color-brand` | `#13264b` | sidebar — exact navy sampled from Logo-Ori.png |
+| `--color-canvas` | `#f0f3f8` | page background |
+| `--color-card` / `--color-line` / `--color-line-soft` | `#ffffff / #e4e7ee / #edf0f5` | surfaces and edges |
+| `--color-ink / -soft / -faint` | `#1b2733 / #667085 / #98a2b3` | text tiers |
+| `--color-action / -deep / -tint` | `#1d4ed8 / #1e40af / #eff4ff` | buttons, links, current-phase |
+| `--color-ok-* / live-* / info-* / bad-*` | Untitled-UI-style tints | Selesai / Berlangsung / Berjalan / over-contract & errors |
 
-Color never carries meaning alone (rule 5): every status/warning pairs the
-color with an Indonesian word ("Berjalan", "+3 hari lebih", "Tumpang tindih").
+Type: self-hosted InterVariable, base 16px, `tabular-nums` wherever numbers
+align. Icons: **Lucide**, inline SVG, monochrome, always beside text.
 
-## Components
+## Deviations from the inspo (deliberate)
 
-- **Sidebar**: 240px sticky navy column; white brand block; nav items 44px,
-  `rgba(255,255,255,.72)` text, active = 14% white pill; footer (user, Keluar)
-  above a hairline. Collapses to a top bar <760px.
-- **Card**: white, 12px radius, `--shadow`, 1px `--line` edge.
-- **Status pills**: dot + word, tinted background, 999px radius.
-- **Buttons**: primary filled `--sea` with shadow; secondary white with
-  `#d0d5dd` border. Always a labeled Indonesian word.
-- **Tables**: `#f9fafb` header band with 13px gray-600 labels; 14–16px cell
-  padding; `white-space: nowrap` by default with `.wrap` opt-out (routes,
-  notes); hover `#f6f8fb`; numbers right-aligned tabular.
-- **KPI cards**: label on top (gray 13.5px), number below (30px/700).
-- **Vessel cards**: 3px `--sea` top accent; voyage code 24px/700.
-- **Ledger** (voyage summary): one figure per line — label left gray, value
-  right 650 tabular, faint provenance note ("di sheet: …") beneath; total row
-  22px, demurrage in `--bad-ink`.
-- **Timeline marks**: ongoing row = `--sea-tint` fill; sailing leg = 3px
-  muted-blue inset left edge; W1/W2 = tinted full-width strips with a plain
-  Indonesian sentence.
-- **Entry panel (S5)**: `#f8fafc` inset panel inside the timeline card.
+- No pastel icon-circle rainbow — icon tiles are neutral; color stays semantic.
+- No fake "Progress 82%" — progress is always real numbers (hari / kontrak).
+- No icon-only actions (eye/kebab) — text links ("Lihat", "Ubah") per rule 1.
+- 2 hero vessel cards (the company has 2 vessel sets), not 3 small ones.
+- Alerts panel ("Perlu perhatian") derives from real data: over-contract,
+  gap/overlap findings, long-running open activities, missing laytime.
+
+## Motion ("Livelier" package — all honor `prefers-reduced-motion`)
+
+- Cards rise in with a 60–100ms stagger (`animate-rise` + `animation-delay`).
+- Progress bars and the route line fill from zero (`animate-fill`).
+- Current-phase dot pulses (`animate-pulse-soft`); the sailboat marker bobs
+  while a voyage is ongoing (`animate-bob`).
+- KPI numbers count up (~700ms, vanilla JS in voyage_list.html; static values
+  remain without JS).
+- Hover: card shadow lift, 150ms color eases. Banned: bounce, spinners.
+
+## Components (in `@layer components`)
+
+`.card`, `.btn` (+`-primary/-secondary/-danger`), `.chip` (+`-ok/-live/-info/-bad`,
+dot + word), `.message` (+ tags), `.btn-ghost`/`.undo-form` (flash undo).
+Django form widgets are styled at the element level in `@layer base`
+(inputs, selects with data-URI chevron) since they render class-less.
 
 ## Layout
 
-8px grid; content column max 1160px in a 48px-padded area; sections separated
-by 24px. Focus ring: 2px `--sea`, offset 2. `prefers-reduced-motion` honored.
+Sidebar 248px sticky (collapses to a top bar <1024px). Content column
+max 1160px, centered. Tables: uppercase 12px tracked headers, roomy rows,
+right-aligned tabular numbers, mini progress bars always beside the numbers.
+Dashboard grid: 2 vessel cards + alerts panel / KPI band / filters / table
+with pagination (10/page).
 
 ## Voice
 
-Bahasa Indonesia everywhere, sentence case, no jargon, no exclamation points.
-Verbs specific and consistent: "Simpan kegiatan", "Selesaikan voyage",
-"Ekspor CSV". Labels are phrases, not codes ("hari di pelabuhan, semua
-voyage").
+Bahasa Indonesia everywhere, sentence case, no jargon, no exclamation
+points. Time-of-day greeting on the dashboard. Every status color carries an
+Indonesian word.

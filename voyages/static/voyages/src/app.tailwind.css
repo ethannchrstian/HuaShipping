@@ -1,0 +1,224 @@
+/* UI v4 source — built with the Tailwind standalone CLI (tools/tailwindcss.exe):
+     tools\tailwindcss.exe -i voyages\static\voyages\src\app.tailwind.css -o voyages\static\voyages\app.css --minify
+   The built app.css is committed; deploys never need Node or the CLI.
+   Tokens govern per DESIGN.md; brand navy #13264b sampled from Logo-Ori.png. */
+
+@import "tailwindcss" source(none);
+@source "../../../templates";
+
+@theme {
+  --font-sans: "InterVariable", "Segoe UI", system-ui, sans-serif;
+
+  /* Brand & surfaces */
+  --color-brand: #13264b;        /* sidebar, exact logo navy */
+  --color-brand-deep: #0c1a37;   /* sidebar footer hairline zone */
+  --color-canvas: #f0f3f8;       /* page background */
+  --color-card: #ffffff;
+  --color-line: #e4e7ee;
+  --color-line-soft: #edf0f5;
+
+  /* Text tiers */
+  --color-ink: #1b2733;
+  --color-ink-soft: #667085;
+  --color-ink-faint: #98a2b3;
+
+  /* Action (buttons, links) — brand-adjacent blue */
+  --color-action: #1d4ed8;
+  --color-action-deep: #1e40af;
+  --color-action-tint: #eff4ff;
+
+  /* Status — always paired with an Indonesian word */
+  --color-ok-bg: #ecfdf3;
+  --color-ok-ink: #027a48;
+  --color-live-bg: #fffaeb;
+  --color-live-ink: #b54708;
+  --color-info-bg: #eff8ff;
+  --color-info-ink: #175cd3;
+  --color-bad-bg: #fef3f2;
+  --color-bad-ink: #b42318;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.05), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-lift: 0 4px 8px rgb(16 24 40 / 0.06), 0 2px 4px rgb(16 24 40 / 0.05);
+
+  --radius-card: 12px;
+
+  /* Motion (Livelier package; reduced-motion kills all of it in base layer) */
+  --animate-rise: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fill: fillbar 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-bob: bob 2.6s ease-in-out infinite;
+  --animate-pulse-soft: pulsesoft 2.2s ease-in-out infinite;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fillbar {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  @keyframes bob {
+    0%, 100% { transform: translate(-50%, -50%); }
+    50% { transform: translate(-50%, calc(-50% - 3px)); }
+  }
+  @keyframes pulsesoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+}
+
+@layer base {
+  @font-face {
+    font-family: "InterVariable";
+    src: url("fonts/InterVariable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 2px;
+  }
+
+  /* Django-rendered form widgets arrive without classes; style the elements. */
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  input[type="datetime-local"],
+  select,
+  textarea {
+    width: 100%;
+    background: var(--color-card);
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 16px;
+    color: var(--color-ink);
+    box-shadow: 0 1px 2px rgb(16 24 40 / 0.04);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color-action);
+    box-shadow: 0 0 0 3px rgb(29 78 216 / 0.15);
+  }
+  select {
+    appearance: none;
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 550;
+    min-height: 44px;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  }
+  .btn-primary {
+    background: var(--color-action);
+    color: #fff;
+    box-shadow: 0 1px 2px rgb(16 24 40 / 0.15);
+  }
+  .btn-primary:hover { background: var(--color-action-deep); }
+  .btn-secondary {
+    background: #fff;
+    color: var(--color-ink);
+    border: 1px solid #d0d5dd;
+  }
+  .btn-secondary:hover { background: #f8fafc; }
+  .btn-danger {
+    background: #fff;
+    color: var(--color-bad-ink);
+    border: 1px solid #f2b8b0;
+  }
+  .btn-danger:hover { background: var(--color-bad-bg); }
+
+  /* Status chips: dot + Indonesian word, never color alone */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 13px;
+    font-weight: 550;
+    white-space: nowrap;
+  }
+  .chip::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  .chip-ok   { background: var(--color-ok-bg);   color: var(--color-ok-ink); }
+  .chip-live { background: var(--color-live-bg); color: var(--color-live-ink); }
+  .chip-info { background: var(--color-info-bg); color: var(--color-info-ink); }
+  .chip-bad  { background: var(--color-bad-bg);  color: var(--color-bad-ink); }
+
+  /* Flash messages (Django messages framework; tags: success/error/warning/info) */
+  .message {
+    border-radius: 10px;
+    border: 1px solid var(--color-line);
+    background: var(--color-card);
+    box-shadow: var(--shadow-card);
+    padding: 12px 16px;
+    font-size: 15px;
+    animation: var(--animate-rise);
+  }
+  .message-success { border-color: #a6e5c3; background: var(--color-ok-bg); color: var(--color-ok-ink); }
+  .message-error   { border-color: #f2b8b0; background: var(--color-bad-bg); color: var(--color-bad-ink); }
+  .message-warning { border-color: #f4d7a3; background: var(--color-live-bg); color: var(--color-live-ink); }
+
+  /* Undo control injected into flash HTML by views.activity_delete */
+  .undo-form { display: inline; margin-left: 8px; }
+  .btn-ghost {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+}

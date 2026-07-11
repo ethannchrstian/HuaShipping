@@ -1,168 +1,186 @@
 {% extends "base.html" %}
 {% block title %}{{ voyage.code }} · {{ voyage.vessel.tug_name }}{% endblock %}
 {% block content %}
-<p class="crumbs"><a href="{% url 'rekap' %}">Rekap voyage</a> / {{ voyage.code }}</p>
+<p class="text-[14px] text-ink-soft"><a href="{% url 'rekap' %}" class="font-[550] text-action hover:underline">Ringkasan</a> <span class="text-ink-faint">/</span> {{ voyage.code }}</p>
 
-<header class="detail-head">
-  <h1>{{ voyage.code }} <span class="head-vessel">{{ voyage.vessel.name }}</span></h1>
-  <p class="head-meta">
-    {% if voyage.status == "ONGOING" %}<span class="chip chip-ongoing">Berjalan</span>
-    {% else %}<span class="chip chip-done">Selesai</span>{% endif %}
-    {% if voyage.locked %}<span class="chip chip-locked">Terkunci</span>{% endif %}
-    <span>{{ route }}</span>
-    {% if voyage.charterer %}<span>Pencharter: {{ voyage.charterer.code }}</span>{% endif %}
-  </p>
-  <dl class="head-refs">
-    <div><dt>No. kontrak</dt><dd>{{ voyage.contract_no|default:"—" }}</dd></div>
-    <div><dt>Kwitansi</dt><dd>{{ voyage.invoice_no|default:"—" }}</dd></div>
-    <div><dt>Prorata kontrak</dt><dd>{% if summary.laytime %}{{ summary.laytime }} hari{% else %}—{% endif %}</dd></div>
-    <div><dt>Tarif demurrage</dt><dd>{% if demurrage_rate %}{{ demurrage_rate }}/hari{% else %}—{% endif %}</dd></div>
-  </dl>
-  <div class="head-actions">
-    {% if not voyage.locked %}
-      <a class="btn btn-secondary" href="{% url 'voyage_edit' voyage.pk %}">Ubah voyage</a>
-      {% if voyage.status == "ONGOING" %}
-        <a class="btn btn-secondary" href="{% url 'voyage_complete' voyage.pk %}">Selesaikan voyage</a>
+<header class="mt-3 animate-rise">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-[26px] font-bold tracking-tight">{{ voyage.code }} <span class="ml-1 text-[16px] font-[500] text-ink-soft">{{ voyage.vessel.name }}</span></h1>
+      <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[15px] text-ink-soft">
+        {% if voyage.status == "ONGOING" %}<span class="chip chip-info">Berjalan</span>
+        {% else %}<span class="chip chip-ok">Selesai</span>{% endif %}
+        {% if voyage.locked %}<span class="chip bg-[#f2f4f7] text-ink-soft">Terkunci</span>{% endif %}
+        <span>{{ route }}</span>
+        {% if voyage.charterer %}<span>Pencharter: <span class="font-[550] text-ink">{{ voyage.charterer.code }}</span></span>{% endif %}
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2.5">
+      {% if not voyage.locked %}
+        <a class="btn btn-secondary" href="{% url 'voyage_edit' voyage.pk %}">Ubah voyage</a>
+        {% if voyage.status == "ONGOING" %}
+          <a class="btn btn-primary" href="{% url 'voyage_complete' voyage.pk %}">Selesaikan voyage</a>
+        {% endif %}
+      {% else %}
+        <a class="btn btn-secondary" href="{% url 'voyage_unlock' voyage.pk %}">Buka kunci</a>
       {% endif %}
-    {% else %}
-      <a class="btn btn-secondary" href="{% url 'voyage_unlock' voyage.pk %}">Buka kunci</a>
-    {% endif %}
+    </div>
   </div>
+  <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="card px-4 py-3"><dt class="text-[12.5px] text-ink-soft">No. kontrak</dt><dd class="mt-0.5 truncate text-[15px] font-[550]">{{ voyage.contract_no|default:"—" }}</dd></div>
+    <div class="card px-4 py-3"><dt class="text-[12.5px] text-ink-soft">Kwitansi</dt><dd class="mt-0.5 truncate text-[15px] font-[550]">{{ voyage.invoice_no|default:"—" }}</dd></div>
+    <div class="card px-4 py-3"><dt class="text-[12.5px] text-ink-soft">Prorata kontrak</dt><dd class="mt-0.5 text-[15px] font-[550] tabular-nums">{% if summary.laytime %}{{ summary.laytime }} hari{% else %}—{% endif %}</dd></div>
+    <div class="card px-4 py-3"><dt class="text-[12.5px] text-ink-soft">Tarif demurrage</dt><dd class="mt-0.5 truncate text-[15px] font-[550] tabular-nums">{% if demurrage_rate %}{{ demurrage_rate }}/hari{% else %}—{% endif %}</dd></div>
+  </dl>
 </header>
 
 {% if summary.port_time %}
-<section class="card ledger" aria-label="Ringkasan waktu">
+<section class="card mt-5 animate-rise p-5" style="animation-delay: 80ms" aria-label="Ringkasan waktu">
   {% for b in summary.blocks %}
-  <div class="ledger-row">
-    <span class="ledger-label">{{ b.label }}</span>
-    <span class="ledger-value">{{ b.normalized }}
-      <span class="ledger-note">di sheet: {{ b.pair }}</span>
+  <div class="flex items-baseline justify-between gap-4 border-b border-line-soft py-2.5">
+    <span class="text-[15px] text-ink-soft">{{ b.label }}</span>
+    <span class="text-right text-[15px] font-[650] tabular-nums">{{ b.normalized }}
+      <span class="mt-px block text-[13px] font-[450] text-ink-soft">di sheet: {{ b.pair }}</span>
     </span>
   </div>
   {% endfor %}
-  <div class="ledger-row ledger-total">
-    <span class="ledger-label">Total waktu di pelabuhan</span>
-    <span class="ledger-value">{{ summary.port_time }}
-      {% if summary.over_text %}<span class="ledger-note {% if summary.over_days > 0 %}over{% endif %}">{{ summary.over_text }}</span>{% endif %}
+  <div class="flex items-baseline justify-between gap-4 border-b border-line-soft py-3">
+    <span class="text-[15px] font-[600]">Total waktu di pelabuhan</span>
+    <span class="text-right text-[22px] font-bold tabular-nums">{{ summary.port_time }}
+      {% if summary.over_text %}<span class="mt-px block text-[13px] font-[500] {% if summary.over_days > 0 %}text-bad-ink{% else %}text-ok-ink{% endif %}">{{ summary.over_text }}</span>{% endif %}
     </span>
   </div>
   {% if summary.laytime %}
-  <div class="ledger-row">
-    <span class="ledger-label">Prorata sesuai kontrak</span>
-    <span class="ledger-value">{{ summary.laytime }} hari</span>
+  <div class="flex items-baseline justify-between gap-4 border-b border-line-soft py-2.5">
+    <span class="text-[15px] text-ink-soft">Prorata sesuai kontrak</span>
+    <span class="text-[15px] font-[650] tabular-nums">{{ summary.laytime }} hari</span>
   </div>
   {% endif %}
-  <div class="ledger-row {% if summary.demurrage_days %}ledger-demurrage{% endif %}">
-    <span class="ledger-label">Demurrage</span>
-    <span class="ledger-value">{% if summary.demurrage_days is not None %}{{ summary.demurrage_days }} hari{% else %}—{% endif %}
-      {% if summary.demurrage_amount %}<span class="ledger-note">≈ {{ summary.demurrage_amount }}</span>{% endif %}
+  <div class="flex items-baseline justify-between gap-4 py-2.5 {% if summary.demurrage_days %}text-bad-ink{% endif %}">
+    <span class="text-[15px] {% if not summary.demurrage_days %}text-ink-soft{% endif %}">Demurrage</span>
+    <span class="text-right text-[15px] font-[650] tabular-nums">{% if summary.demurrage_days is not None %}{{ summary.demurrage_days }} hari{% else %}—{% endif %}
+      {% if summary.demurrage_amount %}<span class="mt-px block text-[13px] font-[500]">≈ {{ summary.demurrage_amount }}</span>{% endif %}
     </span>
   </div>
 </section>
 {% endif %}
 
-<section class="card" aria-label="Muatan">
-  <h2>Muatan</h2>
+<section class="card mt-5 animate-rise overflow-hidden" style="animation-delay: 160ms" aria-label="Muatan">
+  <h2 class="px-5 pt-5 text-[17px] font-[650]">Muatan</h2>
   {% if parcels %}
-  <table>
-    <thead><tr><th scope="col">Komoditas</th><th scope="col" class="num">Jumlah (MT)</th><th scope="col">Jetty muat</th><th scope="col">Pengirim</th></tr></thead>
-    <tbody>
-      {% for p in parcels %}
-      <tr>
-        <td>{{ p.commodity }}</td>
-        <td class="num">{{ p.quantity_mt|floatformat:"0" }}</td>
-        <td>{{ p.load_jetty }}</td>
-        <td>{{ p.shipper|default:"—" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}<p class="empty">Belum ada data muatan.</p>{% endif %}
+  <div class="mt-3 overflow-x-auto">
+    <table class="w-full text-[15px]">
+      <thead>
+        <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
+          <th scope="col" class="px-5 py-3 font-[600]">Komoditas</th>
+          <th scope="col" class="px-5 py-3 text-right font-[600]">Jumlah (MT)</th>
+          <th scope="col" class="px-5 py-3 font-[600]">Jetty muat</th>
+          <th scope="col" class="px-5 py-3 font-[600]">Pengirim</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in parcels %}
+        <tr class="border-t border-line-soft">
+          <td class="whitespace-nowrap px-5 py-3.5">{{ p.commodity }}</td>
+          <td class="whitespace-nowrap px-5 py-3.5 text-right tabular-nums">{{ p.quantity_mt|floatformat:"0" }}</td>
+          <td class="px-5 py-3.5">{{ p.load_jetty }}</td>
+          <td class="px-5 py-3.5">{{ p.shipper|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="px-5 pb-5 pt-2 text-[15px] text-ink-soft">Belum ada data muatan.</p>{% endif %}
 </section>
 
-<section class="card" aria-label="Kegiatan">
-  <h2>Kegiatan</h2>
-  <table class="timeline">
-    <thead>
-      <tr>
-        <th scope="col">Kegiatan</th>
-        <th scope="col">Mulai</th>
-        <th scope="col">Selesai</th>
-        <th scope="col" class="num">Lama</th>
-        <th scope="col">Catatan</th>
-        {% if not voyage.locked %}<th scope="col"><span class="sr-only">Aksi</span></th>{% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in timeline %}
-      <tr class="{% if row.ongoing %}ongoing-row{% endif %} {% if row.is_sailing %}sailing-row{% endif %} {% if editing_activity and editing_activity.pk == row.activity.pk %}editing-row{% endif %}">
-        <td>{{ row.activity.activity_type.label_id }}</td>
-        <td>{{ row.activity.start_at|date:"j M Y H:i" }}</td>
-        <td>{% if row.activity.end_at %}{{ row.activity.end_at|date:"j M Y H:i" }}{% else %}<em>masih berjalan</em>{% endif %}</td>
-        <td class="num">{{ row.duration }}</td>
-        <td class="note-cell">
-          {% if row.is_sailing and row.activity.from_location %}{{ row.activity.from_location }} → {{ row.activity.to_location }}. {% endif %}{{ row.activity.note }}
-        </td>
-        {% if not voyage.locked %}
-        <td class="action-cell"><a href="{% url 'activity_edit' row.activity.pk %}#entri">Ubah</a></td>
+<section class="card mt-5 animate-rise overflow-hidden" style="animation-delay: 240ms" aria-label="Kegiatan">
+  <h2 class="px-5 pt-5 text-[17px] font-[650]">Kegiatan</h2>
+  <div class="mt-3 overflow-x-auto">
+    <table class="w-full text-[15px]">
+      <thead>
+        <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
+          <th scope="col" class="px-5 py-3 font-[600]">Kegiatan</th>
+          <th scope="col" class="px-5 py-3 font-[600]">Mulai</th>
+          <th scope="col" class="px-5 py-3 font-[600]">Selesai</th>
+          <th scope="col" class="px-5 py-3 text-right font-[600]">Lama</th>
+          <th scope="col" class="px-5 py-3 font-[600]">Catatan</th>
+          {% if not voyage.locked %}<th scope="col" class="px-5 py-3"><span class="sr-only">Aksi</span></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in timeline %}
+        <tr class="border-t border-line-soft
+                   {% if editing_activity and editing_activity.pk == row.activity.pk %}bg-action-tint
+                   {% elif row.ongoing %}bg-info-bg/60{% endif %}
+                   {% if row.is_sailing %}shadow-[inset_3px_0_0_0_#9db8dd]{% endif %}">
+          <td class="whitespace-nowrap px-5 py-3.5 font-[550]">{{ row.activity.activity_type.label_id }}</td>
+          <td class="whitespace-nowrap px-5 py-3.5 tabular-nums">{{ row.activity.start_at|date:"j M Y H:i" }}</td>
+          <td class="whitespace-nowrap px-5 py-3.5 tabular-nums">{% if row.activity.end_at %}{{ row.activity.end_at|date:"j M Y H:i" }}{% else %}<em class="text-info-ink">masih berjalan</em>{% endif %}</td>
+          <td class="whitespace-nowrap px-5 py-3.5 text-right tabular-nums">{{ row.duration }}</td>
+          <td class="max-w-72 px-5 py-3.5 text-[14px] text-ink-soft">
+            {% if row.is_sailing and row.activity.from_location %}{{ row.activity.from_location }} → {{ row.activity.to_location }}. {% endif %}{{ row.activity.note }}
+          </td>
+          {% if not voyage.locked %}
+          <td class="whitespace-nowrap px-5 py-3.5 text-right"><a class="text-[14px] font-[550] text-action hover:underline" href="{% url 'activity_edit' row.activity.pk %}#entri">Ubah</a></td>
+          {% endif %}
+        </tr>
+        {% if row.warning %}
+        <tr class="{% if row.warning_kind == 'gap' %}bg-live-bg text-live-ink{% else %}bg-bad-bg text-bad-ink{% endif %}">
+          <td colspan="{% if voyage.locked %}5{% else %}6{% endif %}" class="px-5 py-2.5 text-[14px]">{{ row.warning }}</td>
+        </tr>
         {% endif %}
-      </tr>
-      {% if row.warning %}
-      <tr class="warning-row warning-{{ row.warning_kind }}">
-        <td colspan="{% if voyage.locked %}5{% else %}6{% endif %}">{{ row.warning }}</td>
-      </tr>
-      {% endif %}
-      {% empty %}
-      <tr><td colspan="{% if voyage.locked %}5{% else %}6{% endif %}" class="empty">Belum ada kegiatan tercatat — mulai dengan perjalanan ke lokasi muat di bawah.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        {% empty %}
+        <tr><td colspan="{% if voyage.locked %}5{% else %}6{% endif %}" class="border-t border-line-soft px-5 py-10 text-center text-ink-soft">Belum ada kegiatan tercatat — mulai dengan perjalanan ke lokasi muat di bawah.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
   {% if not voyage.locked %}
-  <div class="entry-row" id="entri">
+  <div class="border-t border-line bg-[#f8fafc] p-5" id="entri">
     {% if editing_activity %}
-    <h3>Ubah kegiatan</h3>
-    <p class="hint hint-top">Mengubah baris “{{ editing_activity.activity_type.label_id }}” ({{ editing_activity.start_at|date:"j M Y H:i" }}).</p>
-    <form method="post" action="{% url 'activity_edit' editing_activity.pk %}" class="entry-form">
+    <h3 class="text-[16px] font-[650]">Ubah kegiatan</h3>
+    <p class="mt-1 text-[14px] text-ink-soft">Mengubah baris “{{ editing_activity.activity_type.label_id }}” ({{ editing_activity.start_at|date:"j M Y H:i" }}).</p>
+    <form method="post" action="{% url 'activity_edit' editing_activity.pk %}" class="mt-4">
     {% else %}
-    <h3>Tambah kegiatan</h3>
-    <p class="hint hint-top">Jam mulai sudah terisi dari kegiatan sebelumnya — tinggal lengkapi lalu simpan; baris berikutnya langsung siap.</p>
-    <form method="post" action="{% url 'activity_add' voyage.pk %}" class="entry-form">
+    <h3 class="text-[16px] font-[650]">Tambah kegiatan</h3>
+    <p class="mt-1 text-[14px] text-ink-soft">Jam mulai sudah terisi dari kegiatan sebelumnya — tinggal lengkapi lalu simpan; baris berikutnya langsung siap.</p>
+    <form method="post" action="{% url 'activity_add' voyage.pk %}" class="mt-4">
     {% endif %}
       {% csrf_token %}
-      <div class="entry-grid">
-        <div class="field">
-          <label for="{{ form.activity_type.id_for_label }}">{{ form.activity_type.label }}</label>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.activity_type.id_for_label }}">{{ form.activity_type.label }}</label>
           {{ form.activity_type }}
-          {% for e in form.activity_type.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+          {% for e in form.activity_type.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
         </div>
-        <div class="field">
-          <label for="{{ form.start_at.id_for_label }}">{{ form.start_at.label }}</label>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.start_at.id_for_label }}">{{ form.start_at.label }}</label>
           {{ form.start_at }}
-          {% for e in form.start_at.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+          {% for e in form.start_at.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
         </div>
-        <div class="field">
-          <label for="{{ form.end_at.id_for_label }}">{{ form.end_at.label }}</label>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.end_at.id_for_label }}">{{ form.end_at.label }}</label>
           {{ form.end_at }}
-          <p class="hint">{{ form.end_at.help_text }}</p>
-          {% for e in form.end_at.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+          <p class="mt-1 text-[13px] text-ink-faint">{{ form.end_at.help_text }}</p>
+          {% for e in form.end_at.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
         </div>
-        <div class="field">
-          <label for="{{ form.from_location.id_for_label }}">{{ form.from_location.label }}</label>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.from_location.id_for_label }}">{{ form.from_location.label }}</label>
           {{ form.from_location }}
-          <p class="hint">{{ form.from_location.help_text }}</p>
+          <p class="mt-1 text-[13px] text-ink-faint">{{ form.from_location.help_text }}</p>
         </div>
-        <div class="field">
-          <label for="{{ form.to_location.id_for_label }}">{{ form.to_location.label }}</label>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.to_location.id_for_label }}">{{ form.to_location.label }}</label>
           {{ form.to_location }}
         </div>
-        <div class="field field-grow">
-          <label for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+        <div class="sm:col-span-2 lg:col-span-3">
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
           {{ form.note }}
         </div>
       </div>
-      {% for e in form.non_field_errors %}<p class="field-error">{{ e }}</p>{% endfor %}
-      <div class="form-actions">
+      {% for e in form.non_field_errors %}<p class="mt-3 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      <div class="mt-4 flex items-center gap-2.5">
         <button type="submit" class="btn btn-primary">{% if editing_activity %}Simpan perubahan{% else %}Simpan kegiatan{% endif %}</button>
         {% if editing_activity %}
         <a class="btn btn-secondary" href="{% url 'voyage_detail' voyage.pk %}#entri">Batal</a>
@@ -170,14 +188,14 @@
       </div>
     </form>
     {% if editing_activity %}
-    <form method="post" action="{% url 'activity_delete' editing_activity.pk %}" class="delete-form">
+    <form method="post" action="{% url 'activity_delete' editing_activity.pk %}" class="mt-3">
       {% csrf_token %}
-      <button type="submit" class="btn-ghost btn-danger-ghost">Hapus kegiatan ini</button>
+      <button type="submit" class="btn-ghost text-bad-ink">Hapus kegiatan ini</button>
     </form>
     {% endif %}
   </div>
   {% else %}
-  <p class="hint">Voyage terkunci — kegiatan tidak dapat diubah.</p>
+  <p class="border-t border-line-soft px-5 py-4 text-[14px] text-ink-soft">Voyage terkunci — kegiatan tidak dapat diubah.</p>
   {% endif %}
 </section>
 {% endblock %}

@@ -11,33 +11,52 @@ there). It starts the development server; open **http://127.0.0.1:8000** in a
 browser. Stop it with `Ctrl+C`. One-time setup if you haven't yet: create your
 account with `.venv\Scripts\python manage.py createsuperuser`.
 
+(For design work only: `dev css` in a second terminal rebuilds the stylesheet
+live while templates are edited — see DESIGN.md.)
+
 ## Screen 1 — Masuk (login)
 
-A single centered card: username, password, one button. No self-registration —
-accounts are created by the admin (you), which is the security model the
-company chose (ADR-009: no roles, everyone sees everything). A wrong password
-shows one plain-Indonesian error, deliberately not saying *which* field was
-wrong (standard practice: don't help someone guessing usernames).
+A centered white card on the brand-navy background, topped with the company
+logo: username, password, one button. No self-registration — accounts are
+created by the admin (you), which is the security model the company chose
+(ADR-009: no roles, everyone sees everything). A wrong password shows one
+plain-Indonesian error, deliberately not saying *which* field was wrong
+(standard practice: don't help someone guessing usernames).
 
-## Screen 2 — Rekap voyage (the home page)
+## Screen 2 — Ringkasan (the dashboard, home page)
 
 Reading order, top to bottom — arranged so the most-asked question is answered
 first:
 
-1. **Vessel status cards** — one per tugboat set. Answers "where are my boats
-   right now": the current voyage code (click it to open), a status chip, the
-   activity currently happening, and days at port so far. These cards ignore
-   the filters below — they are always "now".
-2. **The number bar** — four figures across one card: voyages currently
-   running, total port days, demurrage days billed, MT carried. Each number
-   has its meaning written under it in words, not an abbreviation.
-3. **Filters** — vessel, status, year, and a search box (voyage code,
-   contract, kwitansi, charterer). Choose and press *Terapkan*.
-4. **The voyage table** — one row per voyage, 7 columns. The column worth
-   explaining is **"Hari pelabuhan / kontrak"**: actual days in port versus
-   the contract's allowed days (laytime). When actual exceeds allowed, the
-   number turns red *and* says "lebih" — color never carries meaning alone, so
-   it works for color-blind users and in a black-and-white print.
+1. **Greeting header** — time-of-day greeting with today's date, and the
+   *Voyage baru* button on the right.
+2. **Vessel hero cards** — one per tugboat set, always "now" (they ignore the
+   filters below). Each card answers "where is my boat": the current voyage
+   code (click it to open), a status chip, a **route line** (load port on the
+   left, discharge port on the right, a sailboat marker positioned along it by
+   phase — it gently bobs while a voyage is running), a three-step phase
+   tracker **Muat → Berlayar → Bongkar** with the current step highlighted,
+   the exact activity happening ("Sedang: Kegiatan bongkar"), and days at
+   port versus the contract with a progress bar (green within contract, red
+   over).
+3. **Perlu perhatian** — the alerts panel. Everything in it is derived from
+   real data on *ongoing* voyages only: over-contract days, gap/overlap
+   findings in the activity log, an activity left running suspiciously long,
+   or missing contract laytime. Each alert links to its voyage. Empty state
+   says "Semua beres".
+4. **The number band** — four year-scoped figures: voyages running now,
+   demurrage days this year, the rupiah estimate of that demurrage, and MT
+   carried this year. Each shows last year's figure underneath for honest
+   comparison — the period is always written out so a number is never
+   ambiguous.
+5. **Filters** — vessel, status, year (these apply instantly on change) and a
+   search box (voyage code, contract, kwitansi, charterer — press Enter).
+6. **The voyage table** — one row per voyage, paginated at 10. The column
+   worth explaining is **"Hari pelabuhan / kontrak"**: actual days in port
+   versus the contract's allowed days (laytime), with a mini progress bar.
+   When actual exceeds allowed, a red badge says "+N hari lebih" — color
+   never carries meaning alone, so it works for color-blind users and in a
+   black-and-white print. Every row also ends with a *Lihat* link.
 
 ## Screen 3 — Detail voyage
 
@@ -89,28 +108,26 @@ view; the office team normally never needs it.
 
 ## Why it looks the way it does
 
-The identity ("ledger on good paper", `DESIGN.md`) came from a research pass
-on internal-tool and table design (Nielsen-style guidance, the GOV.UK design
-system — the reference for accessible forms used by every age group — and
-Refactoring UI's hierarchy rules):
+The v4 identity (`DESIGN.md`) is built with Tailwind CSS on the company's own
+brand navy (sampled from the logo), informed by modern logistics-dashboard
+references the owner picked, and verified screen-by-screen with rendered
+screenshots before shipping:
 
-- **Hierarchy from size and weight, not boxes.** Fewer borders, more
-  whitespace; one accent color (deep sea blue) so highlights actually
-  highlight.
+- **Hierarchy from size and weight, not boxes.** White cards on a cool
+  canvas; one action blue so highlights actually highlight.
 - **Text left, numbers right, always tabular digits** so columns of durations
   line up like a printed register and are comparable at a glance.
-- **Labels written as phrases** ("hari di pelabuhan, semua voyage") instead of
-  cryptic captions — faster to learn for non-technical users.
+- **Real numbers, never decoration** — progress bars always sit beside the
+  figures they illustrate; no invented "82%" metrics.
+- **Motion is purposeful and quiet**: cards rise in, bars fill, the current
+  phase pulses, KPI numbers count up — and all of it switches off for users
+  with reduced-motion set.
 - **Every rule from the UX critique is binding** (docs/06): 16px base text,
   44px touch targets, no icon-only buttons, every action a labeled Indonesian
   word, color always paired with a word, keyboard focus visible everywhere.
-- **Anti-references** (PRODUCT.md): no dashboard-gradient look, no emoji
-  icons, no dense 11-column tables — the tool should feel like calm, organized
-  paperwork.
 
 ## What intentionally doesn't exist yet
 
-No dead buttons is a binding rule, so features that aren't built aren't shown:
-creating/editing a voyage in the UI (use admin meanwhile), editing/deleting an
-activity, CSV export, and the printable time sheet (V1.1). They arrive in the
-next build steps, before the office pilot.
+No dead buttons is a binding rule, so features that aren't built aren't
+shown: CSV export, reports/recap pages, and the printable time sheet (V1.1).
+They arrive in the next build steps, before the office pilot.

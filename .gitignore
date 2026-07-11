@@ -25,6 +25,11 @@ Thumbs.db
 *.jpeg
 *.jpg
 prototype.html
+/inspo.png
+/Logo-Ori.png
+
+# Local build tools (Tailwind standalone CLI — see DESIGN.md for download URL)
+/tools/
 
 # Generated Word/PDF exports of docs (source of truth is the .md in docs/)
 *.docx

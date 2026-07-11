@@ -1,4 +1,4 @@
-# DESIGN — Visual identity (v5)
+# DESIGN — Visual identity (v6)
 
 Governed by PRODUCT.md ("tenang, jelas, terpercaya") and the binding UI rules
 in docs/06-screens.md. prototype.html remains an anti-reference.
@@ -20,6 +20,21 @@ follows meaning: red ↑ demurrage, green ↑ tonnage); filters expanded
 self-hosted HTMX (`hx-select` on the same URL — no partial templates, URL
 stays shareable); table rows fully clickable with the code link kept for
 keyboard. Other screens stay at 1160px via the `container` template block.
+
+**v6 (2026-07-11, exampleUI.png rebuild):** dashboard remade to the owner's
+target mock with honest data substitutions (no invented ETAs/expiries —
+"Dimulai N hari lalu", real alert types, phase-based Progres %, vs-tahun-lalu
+deltas). Voyage aktif = one container card with two inner voyage cards (ship
+illustration `ship.png`, phase chip, pin-to-pin route, dot tracker on a line,
+4-cell fact grid, bottom-pinned footer; incomplete data = one amber
+"Lengkapi" line). Pusat tindakan = tinted severity rows with action buttons.
+KPI cards with colored icon tiles + arrows. Filter bar single-row w/ grouped
+date-range control and "Hapus saringan (n)". Table: dot + code + phase %,
+two-line KONTRAK column, "Sesuai kontrak / Lebih N hari" chips, chevron rows,
+elided pagination + rows-per-page. Ekspor CSV button (real endpoint
+/ekspor.csv, filter-aware, UTF-8 BOM for Excel). Lesson enforced: **primary
+screenshot judgment width is 1920 full-page**; the v5 dead zone shipped
+because review stopped at 1536.
 
 ## Build (Tailwind v4, standalone CLI — no Node)
 

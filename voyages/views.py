@@ -1,3 +1,4 @@
+import csv
 import datetime
 
 from django.contrib import messages
@@ -5,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -17,8 +19,8 @@ from .forms import NEXT_TYPE, ActivityForm, ParcelFormSet, VoyageForm, next_code
 from .models import Activity, Charterer, Jetty, Vessel, Voyage
 
 
-@login_required
-def voyage_list(request):
+def _filtered_voyages(request):
+    """Apply the dashboard filters from GET params; returns (queryset, filters-dict)."""
     voyages = Voyage.objects.select_related("vessel", "charterer", "discharge_jetty").prefetch_related(
         "activities__activity_type", "parcels__load_jetty"
     )
@@ -55,16 +57,30 @@ def voyage_list(request):
             Q(code__icontains=q) | Q(contract_no__icontains=q)
             | Q(invoice_no__icontains=q) | Q(charterer__code__icontains=q)
         )
+    return voyages, f
+
+
+@login_required
+def voyage_list(request):
+    voyages, f = _filtered_voyages(request)
 
     rows = presenters.list_rows(voyages)
-    page = Paginator(rows, 10).get_page(request.GET.get("hal"))
+    per_page = request.GET.get("n")
+    per_page = int(per_page) if per_page in {"10", "25", "50"} else 10
+    paginator = Paginator(rows, per_page)
+    page = paginator.get_page(request.GET.get("hal"))
+    page_range = list(paginator.get_elided_page_range(page.number, on_each_side=1, on_ends=1))
     filter_params = request.GET.copy()
     filter_params.pop("hal", None)
+    active_filters = sum(1 for v in f.values() if v)
 
     all_voyages = Voyage.objects.prefetch_related("activities__activity_type", "parcels")
     context = {
         "page": page,
+        "page_range": page_range,
+        "per_page": per_page,
         "filter_qs": filter_params.urlencode(),
+        "active_filters": active_filters,
         "today": timezone.localtime(),
         "last_update": _last_update(),
         "cards": presenters.vessel_cards(Vessel.objects.filter(active=True)),
@@ -77,6 +93,19 @@ def voyage_list(request):
         "filters": f,
     }
     return render(request, "voyages/voyage_list.html", context)
+
+
+@login_required
+def export_csv(request):
+    """Ekspor CSV of the voyage table, honoring the same filters as the dashboard."""
+    voyages, _ = _filtered_voyages(request)
+    stamp = timezone.localtime().strftime("%Y-%m-%d")
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="voyage-{stamp}.csv"'
+    response.write("﻿")  # BOM so Excel opens UTF-8 correctly
+    writer = csv.writer(response)
+    writer.writerows(presenters.export_rows(voyages))
+    return response
 
 
 def _last_update():

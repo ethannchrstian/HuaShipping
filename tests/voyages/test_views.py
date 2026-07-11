@@ -47,7 +47,7 @@ class TestVoyageList:
 
     def test_vessel_cards_show_port_days(self, admin, data):
         html = admin.get("/").content.decode()
-        assert "Waktu di pelabuhan" in html
+        assert "Hari pelabuhan" in html
 
     def test_filter_by_vessel(self, admin, data):
         hn2 = voyage("Navigator 2", "V2601").vessel_id
@@ -76,10 +76,30 @@ class TestVoyageList:
         response = admin.get("/?mulai_dari=bukan-tanggal")
         assert response.status_code == 200
 
+
+class TestExportCsv:
+    def test_csv_has_all_voyages_and_indonesian_headers(self, admin, data):
+        response = admin.get("/ekspor.csv")
+        assert response["Content-Disposition"].startswith("attachment")
+        body = response.content.decode("utf-8-sig")
+        lines = body.strip().splitlines()
+        assert lines[0].startswith("Kode,Kapal,Pencharter")
+        assert len(lines) == 1 + Voyage.objects.count()
+        assert any("V2605" in line for line in lines)
+
+    def test_csv_respects_filters(self, admin, data):
+        hn2 = voyage("Navigator 2", "V2601").vessel_id
+        body = admin.get(f"/ekspor.csv?kapal={hn2}").content.decode("utf-8-sig")
+        assert "V2603" in body and "V2605" not in body
+
+    def test_csv_requires_login(self, client, data):
+        response = client.get("/ekspor.csv")
+        assert response.status_code == 302
+
     def test_over_laytime_marked_with_word_not_just_color(self, admin, data):
         # binding rule 5: color never carries meaning alone
         html = admin.get("/").content.decode()
-        assert "lebih" in html
+        assert "Lebih" in html
 
 
 class TestVoyageDetail:

@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path('', views.voyage_list, name='rekap'),
+    path('ekspor.csv', views.export_csv, name='ekspor_csv'),
     path('voyage/baru/', views.voyage_create, name='voyage_create'),
     path('voyage/<int:pk>/', views.voyage_detail, name='voyage_detail'),
     path('voyage/<int:pk>/ubah/', views.voyage_edit, name='voyage_edit'),

@@ -148,6 +148,12 @@ def list_rows(voyages) -> list[dict]:
         start = acts[0].start_at if acts else None
         laytime = int(v.laytime_days) if v.laytime_days is not None else None
         frm, to = route_ends(v)
+        if v.status != Voyage.Status.ONGOING:
+            progress = 100
+        elif acts:
+            progress = PHASE_TRACK.get(acts[-1].type.phase.value, (0, 4))[1]
+        else:
+            progress = 0
         rows.append(
             {
                 "voyage": v,
@@ -155,6 +161,7 @@ def list_rows(voyages) -> list[dict]:
                 "route": route(v),
                 "route_from": frm,
                 "route_to": to,
+                "progress": progress,
                 "start": start,
                 "port_days": port.days if port else 0,
                 "laytime": laytime,
@@ -170,7 +177,7 @@ def list_rows(voyages) -> list[dict]:
 
 PHASE_STEPS = ("Muat", "Berlayar", "Bongkar")
 
-# activity_type.phase -> (tracker step index, vessel-marker % along the route line)
+# activity_type.phase -> (tracker step index, % progress through the voyage cycle)
 PHASE_TRACK = {
     "ballast": (0, 6),
     "waiting_load": (0, 14),
@@ -181,16 +188,58 @@ PHASE_TRACK = {
     "prep": (2, 94),
 }
 
+# current step -> the phase chip on cards/table (color always beside the word)
+PHASE_CHIP = {0: ("Muat", "info"), 1: ("Berlayar", "ok"), 2: ("Bongkar", "live")}
+
+
+def export_rows(voyages) -> list[list]:
+    """Ekspor CSV: one row per voyage, header first, all figures recomputed."""
+    out = [[
+        "Kode", "Kapal", "Pencharter", "Dari", "Ke", "Mulai", "Status",
+        "Hari pelabuhan", "Kontrak (hari)", "Lebih (hari)", "Hari demurrage",
+        "Estimasi demurrage (Rp)", "Muatan (MT)", "No. kontrak", "Kwitansi",
+    ]]
+    for r in list_rows(voyages):
+        v = r["voyage"]
+        acts = v.domain_activities()
+        port = total_port_time(acts)
+        laytime = r["laytime"]
+        dem = demurrage_days(port, laytime) if v.demurrage_rate_idr else None
+        dem_idr = (
+            demurrage_amount_idr(port, laytime, v.demurrage_rate_idr)
+            if v.demurrage_rate_idr else None
+        )
+        mt = sum(p.quantity_mt for p in v.parcels.all())
+        out.append([
+            v.code,
+            v.vessel.tug_name,
+            v.charterer.code if v.charterer else "",
+            r["route_from"] or "",
+            r["route_to"] or "",
+            r["start"].astimezone().strftime("%Y-%m-%d") if r["start"] else "",
+            "Berjalan" if v.status == Voyage.Status.ONGOING else "Selesai",
+            r["port_days"],
+            laytime if laytime is not None else "",
+            r["over_days"] if r["over"] else 0,
+            dem if dem is not None else "",
+            dem_idr if dem_idr is not None else "",
+            int(mt) if mt else "",
+            v.contract_no,
+            v.invoice_no,
+        ])
+    return out
+
 
 def vessel_cards(vessels) -> list[dict]:
-    """One hero card per vessel set: latest voyage, route line, phase tracker."""
+    """One hero card per vessel set: latest voyage, phase tracker, key facts."""
     cards = []
     for vessel in vessels:
         v = vessel.voyages.order_by("code").last()
         if v is None:
             continue
+        acts = v.domain_activities()
         last = v.activities.select_related("activity_type").last()
-        port = total_port_time(v.domain_activities())
+        port = total_port_time(acts)
         port_days = port.days if port else 0
         laytime = int(v.laytime_days) if v.laytime_days is not None else None
         done = v.status != Voyage.Status.ONGOING
@@ -206,12 +255,18 @@ def vessel_cards(vessels) -> list[dict]:
         ]
         frm, to = route_ends(v)
         over = laytime is not None and port_days > laytime
+        chip_label, chip_kind = ("Selesai", "ok") if done else PHASE_CHIP[step]
+        mt = sum(p.quantity_mt for p in v.parcels.all())
+        started = acts[0].start_at if acts else None
+        started_days = (timezone.now() - started).days if started else None
         cards.append(
             {
                 "vessel": vessel,
                 "voyage": v,
                 "phase": last.activity_type.label_id if last else "—",
                 "phase_ongoing": last is not None and last.end_at is None,
+                "chip_label": chip_label,
+                "chip_kind": chip_kind,
                 "steps": steps,
                 "marker_pct": marker,
                 "route_known": frm is not None or to is not None,
@@ -222,6 +277,9 @@ def vessel_cards(vessels) -> list[dict]:
                 "over": over,
                 "over_days": (port_days - laytime) if over else 0,
                 "progress_pct": min(round(port_days / laytime * 100), 100) if laytime else None,
+                "cargo_mt": num_id(int(mt)) if mt else None,
+                "started_days": started_days,
+                "incomplete": laytime is None or not (frm or to),
             }
         )
     return cards
@@ -267,6 +325,8 @@ def kpis(voyages, year: int) -> dict:
         "dem_trend": trend(now_b["dem_days"], prev_b["dem_days"]),
         "dem_delta": abs(now_b["dem_days"] - prev_b["dem_days"]),
         "dem_amount": rupiah(now_b["dem_idr"]),
+        "dem_amount_prev": rupiah(prev_b["dem_idr"]),
+        "dem_amount_trend": trend(now_b["dem_idr"], prev_b["dem_idr"]),
         "mt": int(now_b["mt"]),
         "mt_fmt": num_id(int(now_b["mt"])),
         "mt_prev": int(prev_b["mt"]),
@@ -293,9 +353,11 @@ def alerts(voyages) -> list[dict]:
                 {
                     "kind": "bad",
                     "voyage": v,
+                    "title": "Melebihi kontrak",
+                    "action": "Tinjau",
                     "text": (
-                        f"{v.code} sudah {port.days - laytime} hari melebihi kontrak "
-                        f"({port.days} / {laytime} hari)."
+                        f"Waktu pelabuhan {port.days} / {laytime} hari — "
+                        f"{port.days - laytime} hari lebih."
                     ),
                 }
             )
@@ -305,10 +367,9 @@ def alerts(voyages) -> list[dict]:
                 {
                     "kind": "warn",
                     "voyage": v,
-                    "text": (
-                        f"Ada {n_warns} catatan waktu yang perlu diperiksa di {v.code} "
-                        f"(jeda atau tumpang tindih)."
-                    ),
+                    "title": "Catatan waktu janggal",
+                    "action": "Periksa",
+                    "text": f"{n_warns} jeda atau tumpang tindih di log kegiatan.",
                 }
             )
         last = v.activities.select_related("activity_type").last()
@@ -319,8 +380,10 @@ def alerts(voyages) -> list[dict]:
                     {
                         "kind": "info",
                         "voyage": v,
+                        "title": "Kegiatan berjalan lama",
+                        "action": "Cek status",
                         "text": (
-                            f"“{last.activity_type.label_id}” di {v.code} sudah berjalan "
+                            f"“{last.activity_type.label_id}” sudah berjalan "
                             f"{running_days} hari — sudah selesai?"
                         ),
                     }
@@ -330,7 +393,9 @@ def alerts(voyages) -> list[dict]:
                 {
                     "kind": "info",
                     "voyage": v,
-                    "text": f"{v.code} belum punya lama kontrak — lengkapi agar demurrage terhitung.",
+                    "title": "Kontrak belum lengkap",
+                    "action": "Lengkapi",
+                    "text": "Lama kontrak belum diisi — demurrage tidak terhitung.",
                 }
             )
     order = {"bad": 0, "warn": 1, "info": 2}

@@ -12,14 +12,14 @@
   /* Brand & surfaces */
   --color-brand: #13264b;        /* sidebar, exact logo navy */
   --color-brand-deep: #0c1a37;   /* sidebar footer hairline zone */
-  --color-canvas: #f0f3f8;       /* page background */
+  --color-canvas: #eef1f6;       /* page background */
   --color-card: #ffffff;
-  --color-line: #e4e7ee;
-  --color-line-soft: #edf0f5;
+  --color-line: #dde2ea;
+  --color-line-soft: #eaedf3;
 
   /* Text tiers */
-  --color-ink: #1b2733;
-  --color-ink-soft: #667085;
+  --color-ink: #182230;
+  --color-ink-soft: #475467;
   --color-ink-faint: #98a2b3;
 
   /* Action (buttons, links) — brand-adjacent blue */

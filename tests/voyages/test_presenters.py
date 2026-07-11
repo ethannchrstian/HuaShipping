@@ -77,8 +77,9 @@ class TestAlerts:
 
     def test_missing_laytime_flagged_in_indonesian(self, data):
         items = presenters.alerts(Voyage.objects.prefetch_related("activities__activity_type"))
-        texts = " | ".join(a["text"] for a in items)
-        assert "V2607 belum punya lama kontrak" in texts
+        flagged = [a for a in items if a["title"] == "Kontrak belum lengkap"]
+        assert any(a["voyage"].code == "V2607" for a in flagged)
+        assert all("Lama kontrak belum diisi" in a["text"] for a in flagged)
 
     def test_severity_order_and_cap(self, data):
         items = presenters.alerts(Voyage.objects.prefetch_related("activities__activity_type"))

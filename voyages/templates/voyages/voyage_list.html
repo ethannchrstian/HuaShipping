@@ -1,23 +1,29 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Ringkasan{% endblock %}
-{% block container %}max-w-[1600px]{% endblock %}
+{% block container %}max-w-[1560px]{% endblock %}
 {% block content %}
-<div class="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
+<div class="flex flex-wrap items-center justify-between gap-4">
   <div>
-    <h1 class="text-[22px] font-bold tracking-tight">Ringkasan operasional</h1>
-    <p class="mt-1 flex flex-wrap items-center gap-x-3 text-[13.5px] text-ink-soft">
-      <span>{{ today|date:"l, j F Y" }}</span>
-      {% if last_update %}
-      <span aria-hidden="true" class="text-ink-faint">·</span>
+    <h1 class="text-[24px] font-bold tracking-tight">Ringkasan operasional</h1>
+    <p class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13.5px] text-ink-soft">
       <span class="inline-flex items-center gap-1.5">
-        <svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+        {{ today|date:"l, j F Y" }}
+      </span>
+      {% if last_update %}
+      <span class="inline-flex items-center gap-1.5">
+        <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
         Data terakhir diubah {{ last_update|date:"j M Y H:i" }}
       </span>
       {% endif %}
     </p>
   </div>
   <div class="flex flex-wrap gap-2.5">
-    <a class="btn btn-secondary" href="{% url 'admin:index' %}">Data master</a>
+    <a class="btn btn-secondary" href="{% url 'ekspor_csv' %}{% if filter_qs %}?{{ filter_qs }}{% endif %}">
+      <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
+      Ekspor
+    </a>
     <a class="btn btn-primary" href="{% url 'voyage_create' %}">
       <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
       Voyage baru
@@ -25,99 +31,137 @@
   </div>
 </div>
 
-<div class="mt-6 grid gap-6 2xl:grid-cols-[1fr_360px]">
-  <section aria-labelledby="judul-aktif">
-    <h2 id="judul-aktif" class="text-[13px] font-[650] uppercase tracking-wider text-ink-soft">Voyage aktif</h2>
-    <div class="mt-3 grid gap-5 lg:grid-cols-2">
+<div class="mt-6 grid gap-5 xl:grid-cols-[1fr_400px]">
+
+  {# ---- Voyage aktif ---- #}
+  <section class="card flex animate-rise flex-col p-5" aria-labelledby="judul-aktif">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 id="judul-aktif" class="flex items-center gap-2 text-[16.5px] font-[650]">
+          Voyage aktif
+          <span class="chip chip-info">{{ kpis.ongoing }}</span>
+        </h2>
+        <p class="mt-0.5 text-[13px] text-ink-soft">Sedang berlangsung</p>
+      </div>
+      <a class="inline-flex items-center gap-1.5 rounded-lg border border-line px-3.5 py-2 text-[13.5px] font-[550] text-ink transition-colors hover:bg-canvas" href="#semua-voyage">
+        Lihat semua voyage
+        <svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <div class="mt-4 grid flex-1 gap-4 lg:grid-cols-2">
       {% for c in cards %}
-      <article class="card animate-rise p-6 transition-shadow hover:shadow-lift" style="animation-delay: {{ forloop.counter0 }}0ms">
+      <article class="relative flex flex-col rounded-xl border border-line p-4 transition-shadow hover:shadow-lift">
+        <img src="{% static 'voyages/ship.png' %}" alt="" aria-hidden="true"
+             class="pointer-events-none absolute right-1 top-8 w-[130px] select-none opacity-95">
         <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <a href="{% url 'voyage_detail' c.voyage.pk %}" class="text-[30px] font-bold leading-none tracking-tight text-ink transition-colors hover:text-action">{{ c.voyage.code }}</a>
-            <p class="mt-2 text-[13.5px] text-ink-soft">{{ c.vessel.tug_name }} <span class="text-ink-faint">&amp;</span> {{ c.vessel.barge_name }}</p>
-          </div>
-          {% if c.voyage.status == "ONGOING" %}<span class="chip chip-info shrink-0">Berjalan</span>{% else %}<span class="chip chip-ok shrink-0">Selesai</span>{% endif %}
+          <a href="{% url 'voyage_detail' c.voyage.pk %}" class="text-[21px] font-bold tracking-tight text-action hover:underline">{{ c.voyage.code }}</a>
+          <span class="chip chip-{{ c.chip_kind }} shrink-0">{{ c.chip_label }}</span>
         </div>
+        <p class="mt-1 max-w-[55%] text-[14px] font-[550]">{{ c.vessel.tug_name }}</p>
 
-        <div class="mt-5">
+        <p class="mt-3 flex max-w-[60%] items-center gap-2 text-[13.5px]">
           {% if c.route_known %}
-          <div class="flex items-baseline justify-between gap-3 text-[14px] font-[600]">
-            <span>{{ c.route_from }}</span>
-            <span class="text-ink-soft">{{ c.route_to }}</span>
-          </div>
+            <svg class="h-4 w-4 shrink-0 text-ink-soft" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+            <span class="font-[550]">{{ c.route_from }}</span>
+            <svg class="h-4 w-8 shrink-0 text-ink-faint" aria-hidden="true" viewBox="0 0 32 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 8h24" stroke-dasharray="3 3"/><path d="m22 4 5 4-5 4"/></svg>
+            <svg class="h-4 w-4 shrink-0 text-ink-soft" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+            <span class="font-[550]">{{ c.route_to }}</span>
           {% else %}
-          <p class="text-[13.5px] text-ink-faint">Rute belum diisi — lengkapi lewat “Ubah voyage”.</p>
+            <span class="text-ink-faint">Rute belum diisi</span>
           {% endif %}
-          <div class="relative mt-2 h-8">
-            <span class="absolute left-0 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-brand"></span>
-            <span class="absolute right-0 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full border-2 border-ink-faint bg-card"></span>
+        </p>
+
+        {# phase tracker: dots on a line, labels underneath #}
+        <div class="mt-6">
+          <div class="relative h-5">
             <span class="absolute left-2 right-2 top-1/2 h-[3px] -translate-y-1/2 rounded bg-line"></span>
-            <span class="absolute left-2 top-1/2 h-[3px] origin-left -translate-y-1/2 animate-fill rounded bg-action" style="width: calc(({{ c.marker_pct }} / 100) * (100% - 16px))"></span>
-            <span class="absolute top-1/2 z-10 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-action bg-card text-action shadow-card {% if c.phase_ongoing %}animate-bob{% endif %}" style="left: calc(8px + ({{ c.marker_pct }} / 100) * (100% - 16px))">
-              <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 18H2a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4Z"/><path d="M21 14 10 2 3 14h18Z"/><path d="M10 2v16"/></svg>
-            </span>
-          </div>
-          <ol class="mt-2.5 flex items-center gap-2.5" aria-label="Tahap voyage">
+            <span class="absolute left-2 top-1/2 h-[3px] origin-left -translate-y-1/2 animate-fill rounded {% if c.chip_kind == 'ok' %}bg-ok-ink{% elif c.chip_kind == 'live' %}bg-live-ink{% else %}bg-action{% endif %}"
+                  style="width: calc(({{ c.marker_pct }} / 100) * (100% - 16px))"></span>
             {% for s in c.steps %}
-              {% if not forloop.first %}<li aria-hidden="true" class="h-px flex-1 bg-line"></li>{% endif %}
-              <li class="flex items-center gap-2 text-[13px]
-                         {% if s.state == 'current' %}font-[600] text-ink{% elif s.state == 'done' %}text-ink-soft{% else %}text-ink-faint{% endif %}">
-                {% if s.state == 'done' %}
-                  <span class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-ok-bg text-ok-ink"><svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-                {% elif s.state == 'current' %}
-                  <span class="h-2.5 w-2.5 animate-pulse-soft rounded-full bg-action"></span>
-                {% else %}
-                  <span class="h-2.5 w-2.5 rounded-full border-2 border-line"></span>
-                {% endif %}
-                {{ s.label }}
-              </li>
+            <span class="absolute top-1/2 -translate-y-1/2 {% if forloop.counter0 == 0 %}left-0{% elif forloop.counter0 == 1 %}left-1/2 -translate-x-1/2{% else %}right-0{% endif %}">
+              {% if s.state == 'done' %}
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-ok-ink text-white"><svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              {% elif s.state == 'current' %}
+                <span class="flex h-5 w-5 {% if c.phase_ongoing %}animate-pulse-soft{% endif %} items-center justify-center rounded-full border-[3px] {% if c.chip_kind == 'live' %}border-live-ink{% elif c.chip_kind == 'ok' %}border-ok-ink{% else %}border-action{% endif %} bg-card"></span>
+              {% else %}
+                <span class="block h-3 w-3 rounded-full border-2 border-line bg-card"></span>
+              {% endif %}
+            </span>
             {% endfor %}
-          </ol>
+          </div>
+          <div class="mt-1.5 flex justify-between text-[12.5px]">
+            {% for s in c.steps %}
+            <span class="{% if s.state == 'current' %}font-[650] text-ink{% elif s.state == 'done' %}text-ink-soft{% else %}text-ink-faint{% endif %}">{{ s.label }}</span>
+            {% endfor %}
+          </div>
         </div>
 
-        <dl class="mt-5 space-y-2.5 border-t border-line-soft pt-4 text-[14px]">
-          <div class="flex items-baseline justify-between gap-4">
-            <dt class="text-ink-soft">Kegiatan sekarang</dt>
-            <dd class="text-right font-[550]">{{ c.phase }}{% if c.phase_ongoing %} <span class="chip chip-live ml-1">Berlangsung</span>{% endif %}</dd>
+        <dl class="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 border-t border-line-soft pt-3.5 sm:grid-cols-4">
+          <div>
+            <dt class="text-[12px] text-ink-soft">Kegiatan</dt>
+            <dd class="mt-0.5 text-[13px] font-[600] leading-snug">{{ c.phase }}</dd>
           </div>
-          <div class="flex items-baseline justify-between gap-4">
-            <dt class="text-ink-soft">Waktu di pelabuhan</dt>
-            <dd class="font-[600] tabular-nums">
-              {{ c.port_days }}{% if c.laytime is not None %} / {{ c.laytime }}{% endif %} hari
-              {% if c.over %}<span class="chip chip-bad ml-1.5">+{{ c.over_days }} lebih</span>{% endif %}
+          <div>
+            <dt class="text-[12px] text-ink-soft">Kontrak</dt>
+            <dd class="mt-0.5 text-[13px] font-[600]">{% if c.laytime is not None %}{{ c.laytime }} hari{% else %}—{% endif %}</dd>
+          </div>
+          <div>
+            <dt class="text-[12px] text-ink-soft">Hari pelabuhan</dt>
+            <dd class="mt-0.5 text-[13px] font-[600] tabular-nums">
+              {{ c.port_days }}{% if c.laytime is not None %} / {{ c.laytime }}{% endif %}
+              {% if c.over %}<span class="block text-[12px] font-[650] text-bad-ink">Lebih {{ c.over_days }} hari</span>{% endif %}
             </dd>
           </div>
-        </dl>
-        {% if c.laytime is not None %}
-          <div class="mt-2.5 h-2 overflow-hidden rounded-full bg-line-soft">
-            <div class="h-full origin-left animate-fill rounded-full {% if c.over %}bg-bad-ink{% else %}bg-ok-ink{% endif %}" style="width: {{ c.progress_pct }}%"></div>
+          <div>
+            <dt class="text-[12px] text-ink-soft">Muatan</dt>
+            <dd class="mt-0.5 text-[13px] font-[600] tabular-nums">{% if c.cargo_mt %}{{ c.cargo_mt }} MT{% else %}—{% endif %}</dd>
           </div>
-        {% else %}
-          <p class="mt-2 text-[13px] text-ink-faint">Lama kontrak belum diisi.</p>
-        {% endif %}
+        </dl>
+
+        <div class="mt-auto border-t border-line-soft pt-3 text-[13px]">
+          {% if c.incomplete %}
+            <p class="flex items-center gap-2 text-live-ink">
+              <svg class="h-4 w-4 shrink-0" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Data kontrak belum lengkap —
+              <a class="font-[650] underline underline-offset-2" href="{% url 'voyage_edit' c.voyage.pk %}">Lengkapi</a>
+            </p>
+          {% else %}
+            <p class="text-ink-soft">Dimulai <span class="font-[600] text-ink">{% if c.started_days is not None %}{{ c.started_days }} hari lalu{% else %}—{% endif %}</span></p>
+          {% endif %}
+        </div>
       </article>
       {% endfor %}
     </div>
   </section>
 
-  <section aria-labelledby="judul-tindakan">
-    <h2 id="judul-tindakan" class="flex items-center gap-2 text-[13px] font-[650] uppercase tracking-wider text-ink-soft">
+  {# ---- Pusat tindakan ---- #}
+  <section class="card animate-rise p-5" style="animation-delay: 60ms" aria-labelledby="judul-tindakan">
+    <h2 id="judul-tindakan" class="flex items-center gap-2 text-[16.5px] font-[650]">
       Pusat tindakan
       {% if alerts %}<span class="chip chip-bad">{{ alerts|length }}</span>{% endif %}
     </h2>
-    <div class="mt-3 space-y-3">
+    <p class="mt-0.5 text-[13px] text-ink-soft">Hal yang perlu perhatian Anda</p>
+    <div class="mt-4 space-y-2.5">
       {% for a in alerts %}
-      <article class="card animate-rise p-4 {% if a.kind == 'bad' %}border-l-[3px] border-l-bad-ink{% elif a.kind == 'warn' %}border-l-[3px] border-l-live-ink{% else %}border-l-[3px] border-l-info-ink{% endif %}" style="animation-delay: {{ forloop.counter0 }}0ms">
-        <div class="flex items-center justify-between gap-3">
-          {% if a.kind == 'bad' %}<span class="chip chip-bad">Mendesak</span>
-          {% elif a.kind == 'warn' %}<span class="chip chip-live">Periksa</span>
-          {% else %}<span class="chip chip-info">Info</span>{% endif %}
-          <a class="shrink-0 rounded-lg border border-line px-3 py-1.5 text-[13px] font-[550] text-ink transition-colors hover:bg-canvas" href="{% url 'voyage_detail' a.voyage.pk %}">Buka {{ a.voyage.code }}</a>
+      <article class="flex items-start gap-3 rounded-lg p-3 {% if a.kind == 'bad' %}bg-bad-bg{% elif a.kind == 'warn' %}bg-live-bg{% else %}bg-info-bg{% endif %}">
+        <span class="mt-0.5 shrink-0 {% if a.kind == 'bad' %}text-bad-ink{% elif a.kind == 'warn' %}text-live-ink{% else %}text-info-ink{% endif %}">
+          {% if a.kind == 'info' %}
+            <svg class="h-[18px] w-[18px]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          {% elif a.kind == 'warn' %}
+            <svg class="h-[18px] w-[18px]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          {% else %}
+            <svg class="h-[18px] w-[18px]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          {% endif %}
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-[13.5px] font-[650] leading-snug">{{ a.voyage.code }} <span class="font-[450] text-ink-faint">·</span> {{ a.title }}</p>
+          <p class="mt-0.5 text-[13px] leading-snug text-ink-soft">{{ a.text }}</p>
         </div>
-        <p class="mt-2.5 text-[13.5px] leading-snug text-ink-soft">{{ a.text }}</p>
+        <a class="shrink-0 self-center rounded-lg border border-line bg-card px-3 py-1.5 text-[12.5px] font-[600] {% if a.kind == 'bad' %}text-bad-ink{% elif a.kind == 'warn' %}text-live-ink{% else %}text-action{% endif %} transition-colors hover:bg-canvas" href="{% url 'voyage_detail' a.voyage.pk %}">{{ a.action }}</a>
       </article>
       {% empty %}
-      <div class="card flex animate-rise items-center gap-3 p-4 text-[14px] text-ok-ink">
+      <div class="flex items-center gap-3 rounded-lg bg-ok-bg p-3.5 text-[14px] text-ok-ink">
         <svg class="h-4 w-4 shrink-0" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         Semua beres — tidak ada yang perlu diperiksa.
       </div>
@@ -126,98 +170,94 @@
   </section>
 </div>
 
-<section class="mt-8" aria-labelledby="judul-kpi">
-  <h2 id="judul-kpi" class="text-[13px] font-[650] uppercase tracking-wider text-ink-soft">KPI operasional</h2>
-  <div class="mt-3 grid grid-cols-2 gap-5 xl:grid-cols-4">
-    <div class="card animate-rise p-5" style="animation-delay: 0ms">
-      <div class="flex items-center justify-between">
-        <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-info-bg text-info-ink">
-          <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></svg>
-        </span>
-      </div>
-      <p class="mt-3 text-[13.5px] text-ink-soft">Voyage berjalan</p>
-      <p class="mt-0.5 text-[28px] font-bold leading-tight tabular-nums" data-countup="{{ kpis.ongoing }}">{{ kpis.ongoing }}</p>
-      <p class="mt-1 text-[12.5px] text-ink-faint">saat ini, kedua kapal</p>
+{# ---- KPI ---- #}
+<section class="mt-5 grid grid-cols-2 gap-5 xl:grid-cols-4" aria-label="KPI operasional">
+  <div class="card flex animate-rise items-center gap-4 p-5">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-info-bg text-info-ink">
+      <svg class="h-6 w-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></svg>
+    </span>
+    <div class="min-w-0">
+      <p class="text-[13.5px] text-ink-soft">Voyage berjalan</p>
+      <p class="text-[24px] font-bold leading-tight tabular-nums" data-countup="{{ kpis.ongoing }}">{{ kpis.ongoing }}</p>
+      <p class="text-[12.5px] text-ink-faint">saat ini, kedua kapal</p>
     </div>
+  </div>
 
-    <div class="card animate-rise p-5" style="animation-delay: 60ms">
-      <div class="flex items-center justify-between">
-        <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-live-bg text-live-ink">
-          <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </span>
-        {% if kpis.dem_trend == 'up' %}
-        <span class="inline-flex items-center gap-1 text-[13px] font-[600] text-bad-ink"><svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>+{{ kpis.dem_delta }} hari</span>
-        {% elif kpis.dem_trend == 'down' %}
-        <span class="inline-flex items-center gap-1 text-[13px] font-[600] text-ok-ink"><svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10"/><path d="M17 7v10H7"/></svg>−{{ kpis.dem_delta }} hari</span>
-        {% endif %}
-      </div>
-      <p class="mt-3 text-[13.5px] text-ink-soft">Hari demurrage {{ kpis.year }}</p>
-      <p class="mt-0.5 text-[28px] font-bold leading-tight tabular-nums" data-countup="{{ kpis.dem_days }}">{{ kpis.dem_days }}</p>
-      <p class="mt-1 text-[12.5px] text-ink-faint">tahun lalu: {{ kpis.dem_days_prev }} hari</p>
+  <div class="card flex animate-rise items-center gap-4 p-5" style="animation-delay: 60ms">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-ok-bg text-ok-ink">
+      <svg class="h-6 w-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
+    </span>
+    <div class="min-w-0">
+      <p class="text-[13.5px] text-ink-soft">MT terangkut {{ kpis.year }}</p>
+      <p class="text-[24px] font-bold leading-tight tabular-nums"><span data-countup="{{ kpis.mt }}">{{ kpis.mt_fmt }}</span> <span class="text-[14px] font-[600] text-ink-soft">MT</span></p>
+      <p class="text-[12.5px] {% if kpis.mt_trend == 'up' %}text-ok-ink{% elif kpis.mt_trend == 'down' %}text-bad-ink{% else %}text-ink-faint{% endif %}">
+        {% if kpis.mt_trend == 'up' %}↑{% elif kpis.mt_trend == 'down' %}↓{% endif %}
+        {{ kpis.mt_delta_fmt }} MT vs tahun lalu
+      </p>
     </div>
+  </div>
 
-    <div class="card animate-rise p-5" style="animation-delay: 120ms">
-      <div class="flex items-center justify-between">
-        <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-bad-bg text-bad-ink">
-          <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg>
-        </span>
-      </div>
-      <p class="mt-3 text-[13.5px] text-ink-soft">Estimasi demurrage {{ kpis.year }}</p>
-      <p class="mt-0.5 text-[23px] font-bold leading-tight tabular-nums">{{ kpis.dem_amount }}</p>
-      <p class="mt-1 text-[12.5px] text-ink-faint">menurut tarif kontrak</p>
+  <div class="card flex animate-rise items-center gap-4 p-5" style="animation-delay: 120ms">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-live-bg text-live-ink">
+      <svg class="h-6 w-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg>
+    </span>
+    <div class="min-w-0">
+      <p class="text-[13.5px] text-ink-soft">Estimasi demurrage {{ kpis.year }}</p>
+      <p class="truncate text-[21px] font-bold leading-tight tabular-nums">{{ kpis.dem_amount }}</p>
+      <p class="text-[12.5px] {% if kpis.dem_amount_trend == 'up' %}text-bad-ink{% elif kpis.dem_amount_trend == 'down' %}text-ok-ink{% else %}text-ink-faint{% endif %}">
+        {% if kpis.dem_amount_trend == 'up' %}↑{% elif kpis.dem_amount_trend == 'down' %}↓{% endif %}
+        tahun lalu: {{ kpis.dem_amount_prev }}
+      </p>
     </div>
+  </div>
 
-    <div class="card animate-rise p-5" style="animation-delay: 180ms">
-      <div class="flex items-center justify-between">
-        <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-ok-bg text-ok-ink">
-          <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
-        </span>
-        {% if kpis.mt_trend == 'up' %}
-        <span class="inline-flex items-center gap-1 text-[13px] font-[600] text-ok-ink"><svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>+{{ kpis.mt_delta_fmt }}</span>
-        {% elif kpis.mt_trend == 'down' %}
-        <span class="inline-flex items-center gap-1 text-[13px] font-[600] text-bad-ink"><svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10"/><path d="M17 7v10H7"/></svg>−{{ kpis.mt_delta_fmt }}</span>
-        {% endif %}
-      </div>
-      <p class="mt-3 text-[13.5px] text-ink-soft">MT terangkut {{ kpis.year }}</p>
-      <p class="mt-0.5 text-[28px] font-bold leading-tight tabular-nums" data-countup="{{ kpis.mt }}">{{ kpis.mt_fmt }}</p>
-      <p class="mt-1 text-[12.5px] text-ink-faint">tahun lalu: {{ kpis.mt_prev_fmt }} MT</p>
+  <div class="card flex animate-rise items-center gap-4 p-5" style="animation-delay: 180ms">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f4ebff] text-[#7f56d9]">
+      <svg class="h-6 w-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </span>
+    <div class="min-w-0">
+      <p class="text-[13.5px] text-ink-soft">Hari demurrage {{ kpis.year }}</p>
+      <p class="text-[24px] font-bold leading-tight tabular-nums" data-countup="{{ kpis.dem_days }}">{{ kpis.dem_days }}</p>
+      <p class="text-[12.5px] {% if kpis.dem_trend == 'up' %}text-bad-ink{% elif kpis.dem_trend == 'down' %}text-ok-ink{% else %}text-ink-faint{% endif %}">
+        {% if kpis.dem_trend == 'up' %}↑ {{ kpis.dem_delta }} hari{% elif kpis.dem_trend == 'down' %}↓ {{ kpis.dem_delta }} hari{% endif %}
+        vs tahun lalu
+      </p>
     </div>
   </div>
 </section>
 
-<section class="mt-8" aria-labelledby="judul-daftar">
-  <h2 id="judul-daftar" class="text-[13px] font-[650] uppercase tracking-wider text-ink-soft">Semua voyage</h2>
-
-  <form method="get" class="card mt-3 grid animate-rise gap-4 p-4 md:grid-cols-2 xl:grid-cols-12"
+{# ---- Filters + table ---- #}
+<section class="mt-5" id="semua-voyage" aria-label="Semua voyage">
+  <form method="get" class="card flex animate-rise flex-wrap items-end gap-3 p-4"
         hx-get="" hx-target="#tabel-voyage" hx-select="#tabel-voyage" hx-swap="outerHTML"
         hx-push-url="true" hx-indicator="#tabel-voyage" aria-label="Saring daftar">
-    <div class="xl:col-span-3">
-      <label for="f-cari" class="mb-1.5 block text-[13px] font-[550] text-ink-soft">Cari</label>
+    <div class="min-w-56 flex-1">
+      <label for="f-cari" class="sr-only">Cari</label>
       <div class="relative">
         <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="search" name="cari" id="f-cari" class="!pl-10" value="{{ filters.cari }}" placeholder="Kode, kontrak, kwitansi">
+        <input type="search" name="cari" id="f-cari" class="!pl-10" value="{{ filters.cari }}" placeholder="Cari voyage, kontrak, kwitansi…">
       </div>
     </div>
-    <div class="xl:col-span-2">
-      <label for="f-kapal" class="mb-1.5 block text-[13px] font-[550] text-ink-soft">Kapal</label>
+    <div class="w-40">
+      <label for="f-kapal" class="mb-1 block text-[12.5px] font-[550] text-ink-soft">Kapal</label>
       <select name="kapal" id="f-kapal" onchange="this.form.requestSubmit()">
-        <option value="">Semua</option>
+        <option value="">Semua kapal</option>
         {% for v in vessels %}
           <option value="{{ v.pk }}" {% if filters.kapal == v.pk|stringformat:"s" %}selected{% endif %}>{{ v.tug_name }}</option>
         {% endfor %}
       </select>
     </div>
-    <div class="xl:col-span-2">
-      <label for="f-status" class="mb-1.5 block text-[13px] font-[550] text-ink-soft">Status</label>
+    <div class="w-36">
+      <label for="f-status" class="mb-1 block text-[12.5px] font-[550] text-ink-soft">Status</label>
       <select name="status" id="f-status" onchange="this.form.requestSubmit()">
-        <option value="">Semua</option>
+        <option value="">Semua status</option>
         {% for value, label in statuses %}
           <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
-    <div class="xl:col-span-2">
-      <label for="f-pencharter" class="mb-1.5 block text-[13px] font-[550] text-ink-soft">Pencharter</label>
+    <div class="w-36">
+      <label for="f-pencharter" class="mb-1 block text-[12.5px] font-[550] text-ink-soft">Pencharter</label>
       <select name="pencharter" id="f-pencharter" onchange="this.form.requestSubmit()">
         <option value="">Semua</option>
         {% for ch in charterers %}
@@ -225,102 +265,145 @@
         {% endfor %}
       </select>
     </div>
-    <div class="xl:col-span-3">
-      <label for="f-pelabuhan" class="mb-1.5 block text-[13px] font-[550] text-ink-soft">Pelabuhan / jetty</label>
+    <div class="w-48">
+      <label for="f-pelabuhan" class="mb-1 block text-[12.5px] font-[550] text-ink-soft">Pelabuhan</label>
       <select name="pelabuhan" id="f-pelabuhan" onchange="this.form.requestSubmit()">
-        <option value="">Semua</option>
+        <option value="">Semua pelabuhan</option>
         {% for j in jetties %}
           <option value="{{ j.pk }}" {% if filters.pelabuhan == j.pk|stringformat:"s" %}selected{% endif %}>{{ j }}</option>
         {% endfor %}
       </select>
     </div>
-    <div class="xl:col-span-2">
-      <label for="f-dari" class="mb-1.5 block text-[13px] font-[550] text-ink-soft">Mulai dari</label>
-      <input type="date" name="mulai_dari" id="f-dari" value="{{ filters.mulai_dari }}" onchange="this.form.requestSubmit()">
+    <div>
+      <span class="mb-1 block text-[12.5px] font-[550] text-ink-soft">Rentang mulai</span>
+      <div class="flex items-center gap-1.5 rounded-lg border border-[#d0d5dd] bg-card px-3 py-[9px] shadow-[0_1px_2px_rgb(16_24_40/0.04)]">
+        <svg class="h-4 w-4 shrink-0 text-ink-faint" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+        <label for="f-dari" class="sr-only">Mulai dari</label>
+        <input type="date" name="mulai_dari" id="f-dari" value="{{ filters.mulai_dari }}" onchange="this.form.requestSubmit()"
+               class="!w-auto !border-0 !p-0 !shadow-none text-[14px]">
+        <span aria-hidden="true" class="text-ink-faint">–</span>
+        <label for="f-sampai" class="sr-only">Sampai</label>
+        <input type="date" name="mulai_sampai" id="f-sampai" value="{{ filters.mulai_sampai }}" onchange="this.form.requestSubmit()"
+               class="!w-auto !border-0 !p-0 !shadow-none text-[14px]">
+      </div>
     </div>
-    <div class="xl:col-span-2">
-      <label for="f-sampai" class="mb-1.5 block text-[13px] font-[550] text-ink-soft">Sampai</label>
-      <input type="date" name="mulai_sampai" id="f-sampai" value="{{ filters.mulai_sampai }}" onchange="this.form.requestSubmit()">
-    </div>
+    {% if active_filters %}
+    <a href="{% url 'rekap' %}#semua-voyage" class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-3.5 text-[13.5px] font-[550] text-ink transition-colors hover:bg-canvas">
+      <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      Hapus saringan
+      <span class="flex h-5 w-5 items-center justify-center rounded-full bg-action text-[11.5px] font-[650] text-white">{{ active_filters }}</span>
+    </a>
+    {% endif %}
     <button type="submit" class="sr-only">Terapkan</button>
   </form>
 
   <div class="card mt-4 animate-rise overflow-hidden transition-opacity" id="tabel-voyage" style="animation-delay: 60ms">
     <div class="overflow-x-auto">
-      <table class="w-full text-[15px]">
+      <table class="w-full text-[14.5px]">
         <thead>
           <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
             <th scope="col" class="px-4 py-3 font-[600]">Voyage</th>
             <th scope="col" class="px-4 py-3 font-[600]">Kapal</th>
             <th scope="col" class="px-4 py-3 font-[600]">Pencharter</th>
             <th scope="col" class="px-4 py-3 font-[600]">Rute</th>
-            <th scope="col" class="px-4 py-3 font-[600]">Mulai</th>
-            <th scope="col" class="px-4 py-3 text-right font-[600]">Hari pelabuhan / kontrak</th>
+            <th scope="col" class="px-4 py-3 font-[600]">Progres</th>
+            <th scope="col" class="px-4 py-3 text-right font-[600]">Kontrak<br><span class="normal-case tracking-normal text-ink-faint">hari pelabuhan</span></th>
             <th scope="col" class="px-4 py-3 font-[600]">Status</th>
+            <th scope="col" class="px-4 py-3 text-right font-[600]">Mulai</th>
+            <th scope="col" class="w-8 px-2 py-3"><span class="sr-only">Buka</span></th>
           </tr>
         </thead>
         <tbody>
           {% for r in page %}
           <tr class="row-klik border-t border-line-soft transition-colors hover:bg-[#f4f7fb]" data-href="{% url 'voyage_detail' r.voyage.pk %}">
-            <td class="whitespace-nowrap px-4 py-4"><a class="font-[650] text-action hover:underline" href="{% url 'voyage_detail' r.voyage.pk %}">{{ r.voyage.code }}</a></td>
-            <td class="whitespace-nowrap px-4 py-4">{{ r.vessel_short }}</td>
-            <td class="whitespace-nowrap px-4 py-4">{{ r.voyage.charterer.code|default:"—" }}</td>
-            <td class="px-4 py-4">
+            <td class="whitespace-nowrap px-4 py-3.5">
+              <span class="inline-flex items-center gap-2">
+                <span aria-hidden="true" class="h-2 w-2 rounded-full {% if r.voyage.status == 'ONGOING' %}bg-action{% else %}bg-ok-ink{% endif %}"></span>
+                <a class="font-[650] text-action hover:underline" href="{% url 'voyage_detail' r.voyage.pk %}">{{ r.voyage.code }}</a>
+                {% if r.voyage.status == "ONGOING" %}<span class="chip chip-info">Berjalan</span>{% endif %}
+              </span>
+            </td>
+            <td class="whitespace-nowrap px-4 py-3.5">{{ r.voyage.vessel.tug_name }}</td>
+            <td class="whitespace-nowrap px-4 py-3.5">{{ r.voyage.charterer.code|default:"—" }}</td>
+            <td class="whitespace-nowrap px-4 py-3.5">
               {% if r.route_from or r.route_to %}
               <span class="inline-flex items-center gap-1.5">
-                <svg class="h-3.5 w-3.5 shrink-0 text-ink-faint" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
+                <svg class="h-4 w-4 shrink-0 text-ok-ink" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
                 {{ r.route_from|default:"?" }}
-                <svg class="h-3.5 w-3.5 shrink-0 text-ink-faint" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                <svg class="h-3.5 w-3.5 shrink-0 text-ink-faint" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                <svg class="h-3 w-6 shrink-0 text-ink-faint" aria-hidden="true" viewBox="0 0 32 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 8h24" stroke-dasharray="3 3"/><path d="m22 4 5 4-5 4"/></svg>
+                <svg class="h-4 w-4 shrink-0 text-bad-ink" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
                 {{ r.route_to|default:"?" }}
               </span>
               {% else %}—{% endif %}
             </td>
-            <td class="whitespace-nowrap px-4 py-4 tabular-nums">{{ r.start|date:"j M Y"|default:"—" }}</td>
-            <td class="whitespace-nowrap px-4 py-4">
-              <div class="flex items-center justify-end gap-3">
-                {% if r.over %}<span class="chip chip-bad">+{{ r.over_days }} hari lebih</span>{% endif %}
-                <span class="font-[550] tabular-nums">{{ r.port_days }} / {{ r.laytime|default_if_none:"—" }}</span>
-                {% if r.laytime %}
-                  <span class="h-1.5 w-20 overflow-hidden rounded-full bg-line-soft">
-                    <span class="block h-full rounded-full {% if r.over %}bg-bad-ink{% else %}bg-ok-ink{% endif %}" style="width: {{ r.bar_pct }}%"></span>
-                  </span>
-                {% endif %}
-              </div>
+            <td class="whitespace-nowrap px-4 py-3.5">
+              <span class="inline-flex items-center gap-2.5">
+                <span class="w-9 text-right font-[550] tabular-nums">{{ r.progress }}%</span>
+                <span class="h-1.5 w-20 overflow-hidden rounded-full bg-line-soft">
+                  <span class="block h-full rounded-full {% if r.over %}bg-bad-ink{% elif r.progress == 100 %}bg-ok-ink{% else %}bg-action{% endif %}" style="width: {{ r.progress }}%"></span>
+                </span>
+              </span>
             </td>
-            <td class="whitespace-nowrap px-4 py-4">
-              {% if r.voyage.status == "ONGOING" %}<span class="chip chip-info">Berjalan</span>{% else %}<span class="chip chip-ok">Selesai</span>{% endif %}
+            <td class="whitespace-nowrap px-4 py-3.5">
+              <span class="inline-flex w-full items-center justify-end gap-2.5">
+                <span class="font-[600] tabular-nums">{{ r.port_days }} / {{ r.laytime|default_if_none:"—" }}</span>
+                {% if r.laytime %}
+                <span class="h-1.5 w-16 overflow-hidden rounded-full bg-line-soft">
+                  <span class="block h-full rounded-full {% if r.over %}bg-bad-ink{% else %}bg-ok-ink{% endif %}" style="width: {{ r.bar_pct }}%"></span>
+                </span>
+                {% endif %}
+              </span>
+            </td>
+            <td class="whitespace-nowrap px-4 py-3.5">
+              {% if r.laytime is None %}<span class="text-ink-faint">—</span>
+              {% elif r.over %}<span class="chip chip-bad">Lebih {{ r.over_days }} hari</span>
+              {% else %}<span class="chip chip-ok">Sesuai kontrak</span>{% endif %}
+            </td>
+            <td class="whitespace-nowrap px-4 py-3.5 text-right tabular-nums">{{ r.start|date:"j M Y"|default:"—" }}</td>
+            <td class="px-2 py-3.5 text-ink-faint">
+              <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="7" class="px-4 py-12 text-center text-ink-soft">Tidak ada voyage yang cocok dengan saringan.</td></tr>
+          <tr><td colspan="9" class="px-4 py-12 text-center text-ink-soft">Tidak ada voyage yang cocok dengan saringan.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
     {% if page.paginator.count %}
-    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-4 py-3 text-[14px] text-ink-soft">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-4 py-3 text-[13.5px] text-ink-soft">
       <span>Menampilkan {{ page.start_index }}–{{ page.end_index }} dari {{ page.paginator.count }} voyage</span>
       {% if page.paginator.num_pages > 1 %}
       <nav class="flex items-center gap-1" aria-label="Halaman">
         {% if page.has_previous %}
-          <a class="rounded-lg border border-line px-3 py-1.5 font-[550] text-ink transition-colors hover:bg-canvas" href="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ page.previous_page_number }}"
-             hx-get="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ page.previous_page_number }}" hx-target="#tabel-voyage" hx-select="#tabel-voyage" hx-swap="outerHTML" hx-push-url="true">Sebelumnya</a>
+          <a class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink transition-colors hover:bg-canvas" aria-label="Sebelumnya" href="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ page.previous_page_number }}"
+             hx-get="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ page.previous_page_number }}" hx-target="#tabel-voyage" hx-select="#tabel-voyage" hx-swap="outerHTML" hx-push-url="true"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
         {% endif %}
-        {% for n in page.paginator.page_range %}
+        {% for n in page_range %}
           {% if n == page.number %}
-            <span aria-current="page" class="rounded-lg bg-action px-3 py-1.5 font-[600] text-white">{{ n }}</span>
+            <span aria-current="page" class="flex h-8 min-w-8 items-center justify-center rounded-lg bg-action px-2 font-[600] text-white">{{ n }}</span>
+          {% elif n == page.paginator.ELLIPSIS %}
+            <span class="px-1.5 text-ink-faint">…</span>
           {% else %}
-            <a class="rounded-lg px-3 py-1.5 font-[550] text-ink transition-colors hover:bg-canvas" href="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ n }}"
+            <a class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 font-[550] text-ink transition-colors hover:bg-canvas" href="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ n }}"
                hx-get="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ n }}" hx-target="#tabel-voyage" hx-select="#tabel-voyage" hx-swap="outerHTML" hx-push-url="true">{{ n }}</a>
           {% endif %}
         {% endfor %}
         {% if page.has_next %}
-          <a class="rounded-lg border border-line px-3 py-1.5 font-[550] text-ink transition-colors hover:bg-canvas" href="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ page.next_page_number }}"
-             hx-get="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ page.next_page_number }}" hx-target="#tabel-voyage" hx-select="#tabel-voyage" hx-swap="outerHTML" hx-push-url="true">Berikutnya</a>
+          <a class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink transition-colors hover:bg-canvas" aria-label="Berikutnya" href="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ page.next_page_number }}"
+             hx-get="?{% if filter_qs %}{{ filter_qs }}&amp;{% endif %}hal={{ page.next_page_number }}" hx-target="#tabel-voyage" hx-select="#tabel-voyage" hx-swap="outerHTML" hx-push-url="true"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
         {% endif %}
       </nav>
       {% endif %}
+      <label class="inline-flex items-center gap-2">
+        Baris per halaman
+        <select class="!w-auto !py-1.5 !text-[13.5px]" aria-label="Baris per halaman"
+                onchange="const p = new URLSearchParams(location.search); p.set('n', this.value); p.delete('hal'); location.search = p;">
+          <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+          <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+          <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+        </select>
+      </label>
     </div>
     {% endif %}
   </div>

@@ -125,6 +125,18 @@ voyages (on completed voyages an open end is an imported, flagged sheet error
 and is excluded); with ~10 voyages a year the page shows per-voyage bars, not
 trend lines.
 
+## Screen — Cetak time sheet
+
+The *Cetak time sheet* button on a voyage opens a print view that reproduces
+the Excel sheet the office signs today — same title line, header block
+(kontrak/kwitansi/muatan/lokasi/laytime/demurrage), the activity grid with
+HARI | WAKTU columns, block subtotals (Total Kegiatan Muat (A) …), grand
+total, Prorata, DEMURRAGE, and the Dibuat Oleh / Diketahui Oleh signature
+block. The difference from Excel: every number is computed from the activity
+log, so a typo'd date can never inflate a printed total again. Ongoing
+voyages print with a red "DRAF — voyage masih berjalan" banner. Prints on one
+A4 via the browser's print dialog (the Cetak button).
+
 ## Data master
 
 The sidebar's *Data master* opens Django's built-in admin — vessel/jetty/

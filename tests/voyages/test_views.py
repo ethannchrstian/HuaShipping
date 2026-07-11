@@ -77,6 +77,36 @@ class TestVoyageList:
         assert response.status_code == 200
 
 
+class TestCetakTimeSheet:
+    def test_matches_sheet_layout_and_oracle_numbers(self, admin, data):
+        # HN1 V2601: block A = 19 | 1d17:00, grand total 27 hari 5:53 (docs/04)
+        v = voyage("Navigator 1", "V2601")
+        html = admin.get(f"/voyage/{v.pk}/cetak/").content.decode()
+        assert "TIME SHEET TB. HUA NAVIGATOR 1" in html
+        assert "TABEL VOYAGE REPORT VOY. V2601" in html
+        assert "Total Kegiatan Muat (A)" in html and "Total Kegiatan Bongkar (B)" in html
+        assert "Prorata Muat - Bongkar Sesuai Kontrak" in html
+        assert "DEMURRAGE" in html
+        assert "Dibuat Oleh" in html and "Felicia" in html
+        assert "Diketahui Oleh" in html and "Tjipta Lesmana Suwarto" in html
+        # grand total: 27 days, 5:53 remainder — as HARI | WAKTU columns
+        assert ">27<" in html and "5:53" in html
+
+    def test_split_laytime_prints_2025_style(self, admin, data):
+        v = voyage("Navigator 1", "V2501")
+        html = admin.get(f"/voyage/{v.pk}/cetak/").content.decode()
+        assert "Hari Muat" in html and "Hari Bongkar" in html
+
+    def test_ongoing_voyage_marked_as_draft(self, admin, data):
+        v = voyage("Navigator 1", "V2607")
+        html = admin.get(f"/voyage/{v.pk}/cetak/").content.decode()
+        assert "DRAF" in html and "MASIH BERJALAN" in html
+
+    def test_requires_login(self, client, data):
+        v = voyage("Navigator 1", "V2601")
+        assert client.get(f"/voyage/{v.pk}/cetak/").status_code == 302
+
+
 class TestExportCsv:
     def test_csv_has_all_voyages_and_indonesian_headers(self, admin, data):
         response = admin.get("/ekspor.csv")

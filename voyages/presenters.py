@@ -192,6 +192,99 @@ PHASE_TRACK = {
 PHASE_CHIP = {0: ("Muat", "info"), 1: ("Berlayar", "ok"), 2: ("Bongkar", "live")}
 
 
+def _hari_waktu(d: timedelta | None) -> tuple[str, str]:
+    """One activity row's (HARI, WAKTU) pair as the sheets print it."""
+    if d is None:
+        return "-", "-"
+    minutes = int(d.total_seconds()) // 60
+    return str(minutes // 1440), f"{(minutes % 1440) // 60}:{minutes % 60:02d}"
+
+
+def print_sheet(voyage: Voyage) -> dict:
+    """Everything the printable time sheet needs, laid out like the Excel original:
+    header block, activity rows with HARI|WAKTU, block subtotals (A/B/...),
+    grand total, prorata, DEMURRAGE, signature block."""
+    activities = list(voyage.activities.select_related("activity_type"))
+    acts = [a.to_domain() for a in activities]
+    blocks = split_port_blocks(acts)
+    letters = "ABCDEFG"
+    subtotal_after: dict[int, dict] = {}
+    for i, block in enumerate(blocks.in_order):
+        side = "Muat" if block in blocks.load else "Bongkar"
+        pair = block_sheet_pair(block)
+        subtotal_after[acts.index(block[-1])] = {
+            "label": f"Total Kegiatan {side} ({letters[i]})",
+            "hari": str(pair.days),
+            "waktu": dur_id(pair.time),
+        }
+
+    rows = []
+    for i, a in enumerate(activities):
+        dur = activity_duration(acts[i].start_at, acts[i].end_at)
+        hari, waktu = _hari_waktu(dur)
+        note = a.note if a.note and not a.note.startswith("IMPORT:") else ""
+        rows.append(
+            {
+                "kind": "activity",
+                "no": i + 1,
+                "label": a.activity_type.label_id,
+                "note": note,
+                "hari": hari,
+                "waktu": waktu if a.end_at else "berjalan",
+                "from_location": a.from_location,
+                "start": a.start_at,
+                "to_location": a.to_location,
+                "end": a.end_at,
+            }
+        )
+        if i in subtotal_after:
+            rows.append({"kind": "subtotal", **subtotal_after[i]})
+
+    port = total_port_time(acts)
+    laytime = int(voyage.laytime_days) if voyage.laytime_days is not None else None
+    dem = demurrage_days(port, laytime) if voyage.demurrage_rate_idr else None
+    if voyage.laytime_load_days and voyage.laytime_discharge_days:
+        laytime_label = (
+            f"{int(voyage.laytime_load_days)} Hari Muat + "
+            f"{int(voyage.laytime_discharge_days)} Hari Bongkar"
+        )
+    elif laytime is not None:
+        laytime_label = f"{laytime} hari"
+    else:
+        laytime_label = "-"
+    parcels = list(voyage.parcels.select_related("load_jetty"))
+    load_jetties = list(dict.fromkeys(str(p.load_jetty) for p in parcels))
+    grand_hari, grand_waktu = _hari_waktu(port)
+    return {
+        "voyage": voyage,
+        "title": (
+            f"TIME SHEET {voyage.vessel.tug_name.upper()} & {voyage.vessel.barge_name.upper()}"
+            f"  (TABEL VOYAGE REPORT VOY. {voyage.code})"
+        ),
+        "header": [
+            ("No. Kontrak", voyage.contract_no or "-"),
+            ("Kwitansi Nomor", voyage.invoice_no or "-"),
+            ("Muatan", " & ".join(
+                f"{p.commodity} {num_id(int(p.quantity_mt))} MT" for p in parcels
+            ) or "-"),
+            ("Lokasi Muat", " & ".join(load_jetties) or "-"),
+            ("Lokasi Bongkar", str(voyage.discharge_jetty) if voyage.discharge_jetty else "-"),
+            ("Lama Muat/Bongkar", laytime_label),
+            ("Demurrage", f"{rupiah(voyage.demurrage_rate_idr)}/hari" if voyage.demurrage_rate_idr else "-"),
+        ],
+        "rows": rows,
+        "grand": {"hari": grand_hari, "waktu": grand_waktu} if port else None,
+        "prorata": laytime_label if laytime is not None else "-",
+        "demurrage": str(dem) if dem is not None else "-",
+        "ongoing": voyage.status == Voyage.Status.ONGOING,
+        "printed_at": timezone.localtime(),
+        "signatures": {
+            "made_by": ("Felicia", "Operasional"),
+            "known_by": ("Tjipta Lesmana Suwarto", "Direktur Utama"),
+        },
+    }
+
+
 def export_rows(voyages) -> list[list]:
     """Ekspor CSV: one row per voyage, header first, all figures recomputed."""
     out = [[

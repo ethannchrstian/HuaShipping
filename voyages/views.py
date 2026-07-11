@@ -96,6 +96,14 @@ def voyage_list(request):
 
 
 @login_required
+def voyage_cetak(request, pk):
+    voyage = get_object_or_404(
+        Voyage.objects.select_related("vessel", "charterer", "discharge_jetty"), pk=pk
+    )
+    return render(request, "voyages/cetak.html", presenters.print_sheet(voyage))
+
+
+@login_required
 def laporan(request):
     voyages = Voyage.objects.select_related("vessel", "charterer", "discharge_jetty").prefetch_related(
         "activities__activity_type", "parcels__load_jetty"

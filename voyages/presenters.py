@@ -200,40 +200,71 @@ def _hari_waktu(d: timedelta | None) -> tuple[str, str]:
     return str(minutes // 1440), f"{(minutes % 1440) // 60}:{minutes % 60:02d}"
 
 
+def _waktu_jam(td: timedelta) -> str:
+    """Excel's [h]:mm total-hours convention for subtotal WAKTU cells (43:30)."""
+    minutes = int(td.total_seconds()) // 60
+    return f"{minutes // 60}:{minutes % 60:02d}"
+
+
 def print_sheet(voyage: Voyage) -> dict:
     """Everything the printable time sheet needs, laid out like the Excel original:
-    header block, activity rows with HARI|WAKTU, block subtotals (A/B/...),
-    grand total, prorata, DEMURRAGE, signature block."""
+    KETERANGAN grid with merged Berangkat/Tiba per leg, colored fills, block
+    subtotals (A/B/...), A+B pair + normalized rows, prorata, DEMURRAGE,
+    signature block."""
     activities = list(voyage.activities.select_related("activity_type"))
     acts = [a.to_domain() for a in activities]
     blocks = split_port_blocks(acts)
     letters = "ABCDEFG"
-    subtotal_after: dict[int, dict] = {}
-    for i, block in enumerate(blocks.in_order):
-        side = "Muat" if block in blocks.load else "Bongkar"
-        pair = block_sheet_pair(block)
-        subtotal_after[acts.index(block[-1])] = {
-            "label": f"Total Kegiatan {side} ({letters[i]})",
-            "hari": str(pair.days),
-            "waktu": dur_id(pair.time),
-        }
 
+    # segments = one sailing leg + the port rows that follow it, mirroring the
+    # sheet's merged BERANGKAT/TIBA cells; block subtotals print at segment end
+    segments: list[dict] = []
+    for i, a in enumerate(activities):
+        if a.activity_type.is_sailing or not segments:
+            segments.append({"start": i, "rows": 0, "from": a.from_location, "to": a.to_location})
+        segments[-1]["rows"] += 1
+
+    block_last = {acts.index(block[-1]): idx for idx, block in enumerate(blocks.in_order)}
+    subtotal_after: dict[int, dict] = {}
+    pending = None
+    for i in range(len(activities)):
+        if i in block_last:
+            pending = block_last[i]
+        seg_end = any(s["start"] + s["rows"] - 1 == i for s in segments)
+        if pending is not None and seg_end:
+            block = blocks.in_order[pending]
+            side = "Muat" if block in blocks.load else "Bongkar"
+            pair = block_sheet_pair(block)
+            subtotal_after[i] = {
+                "label": f"Total Kegiatan {side} ({letters[pending]})",
+                "hari": str(pair.days),
+                "waktu": _waktu_jam(pair.time),
+            }
+            pending = None
+
+    seg_first = {s["start"]: s for s in segments}
+    is_ongoing = voyage.status == Voyage.Status.ONGOING
     rows = []
     for i, a in enumerate(activities):
         dur = activity_duration(acts[i].start_at, acts[i].end_at)
         hari, waktu = _hari_waktu(dur)
         note = a.note if a.note and not a.note.startswith("IMPORT:") else ""
+        seg = seg_first.get(i)
         rows.append(
             {
                 "kind": "activity",
-                "no": i + 1,
                 "label": a.activity_type.label_id,
                 "note": note,
+                # blue fill on port work/waiting rows, like the sheet
+                "fill": not a.activity_type.is_sailing and a.activity_type.phase != "prep",
                 "hari": hari,
-                "waktu": waktu if a.end_at else "berjalan",
-                "from_location": a.from_location,
+                # open end = running on an ongoing voyage; on a completed one it
+                # is the imported end-before-start flag, printed as "-"
+                "waktu": waktu if a.end_at else ("berjalan" if is_ongoing else "-"),
+                "rowspan": seg["rows"] if seg else 0,
+                "seg_from": seg["from"] if seg else "",
+                "seg_to": seg["to"] if seg else "",
                 "start": a.start_at,
-                "to_location": a.to_location,
                 "end": a.end_at,
             }
         )
@@ -241,8 +272,9 @@ def print_sheet(voyage: Voyage) -> dict:
             rows.append({"kind": "subtotal", **subtotal_after[i]})
 
     port = total_port_time(acts)
+    combined = combined_sheet_pair(acts) if acts else None
     laytime = int(voyage.laytime_days) if voyage.laytime_days is not None else None
-    dem = demurrage_days(port, laytime) if voyage.demurrage_rate_idr else None
+    dem = demurrage_days(port, laytime)
     if voyage.laytime_load_days and voyage.laytime_discharge_days:
         laytime_label = (
             f"{int(voyage.laytime_load_days)} Hari Muat + "
@@ -255,7 +287,17 @@ def print_sheet(voyage: Voyage) -> dict:
     parcels = list(voyage.parcels.select_related("load_jetty"))
     load_jetties = list(dict.fromkeys(str(p.load_jetty) for p in parcels))
     grand_hari, grand_waktu = _hari_waktu(port)
+    block_letters = " + ".join(letters[: len(blocks.in_order)])
     return {
+        "combined": (
+            {
+                "label": f"Total Kegiatan Muat - Bongkar ({block_letters})",
+                "hari": str(combined.days),
+                "waktu": _waktu_jam(combined.time),
+            }
+            if combined and len(blocks.in_order) > 1
+            else None
+        ),
         "voyage": voyage,
         "title": (
             f"TIME SHEET {voyage.vessel.tug_name.upper()} & {voyage.vessel.barge_name.upper()}"
@@ -274,7 +316,7 @@ def print_sheet(voyage: Voyage) -> dict:
         ],
         "rows": rows,
         "grand": {"hari": grand_hari, "waktu": grand_waktu} if port else None,
-        "prorata": laytime_label if laytime is not None else "-",
+        "prorata": str(laytime) if laytime is not None else "-",
         "demurrage": str(dem) if dem is not None else "-",
         "ongoing": voyage.status == Voyage.Status.ONGOING,
         "printed_at": timezone.localtime(),

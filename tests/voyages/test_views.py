@@ -97,6 +97,15 @@ class TestCetakTimeSheet:
         html = admin.get(f"/voyage/{v.pk}/cetak/").content.decode()
         assert "Hari Muat" in html and "Hari Bongkar" in html
 
+    def test_excel_visual_conventions(self, admin, data):
+        # colored fills + KETERANGAN grid + [h]:mm subtotals, like the original
+        v = voyage("Navigator 1", "V2501")
+        html = admin.get(f"/voyage/{v.pk}/cetak/").content.decode()
+        assert "KETERANGAN" in html and "BERANGKAT" in html and "PUKUL" in html
+        assert "biru" in html and "hijau" in html and "kuning" in html
+        # completed voyage: the flagged open-ended row prints "-", never "berjalan"
+        assert "berjalan" not in html
+
     def test_ongoing_voyage_marked_as_draft(self, admin, data):
         v = voyage("Navigator 1", "V2607")
         html = admin.get(f"/voyage/{v.pk}/cetak/").content.decode()

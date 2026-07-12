@@ -6,21 +6,25 @@
   <title>Time Sheet {{ voyage.code }} — {{ voyage.vessel.tug_name }}</title>
   <link rel="icon" type="image/png" href="{% static 'voyages/logo.png' %}">
   <style>
-    /* Deliberately mirrors the Excel time sheet the office signs today. */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* Deliberately mirrors the Excel time sheet the office signs today —
+       including its blue/green/yellow fills. */
+    * { margin: 0; padding: 0; box-sizing: border-box;
+        print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     body { font-family: Arial, "Segoe UI", sans-serif; font-size: 12px; color: #000; background: #f0f0f0; }
     .sheet { background: #fff; max-width: 1050px; margin: 16px auto; padding: 28px 32px 40px; box-shadow: 0 1px 6px rgba(0,0,0,.2); }
-    h1 { font-size: 13px; text-align: center; text-decoration: underline; margin-bottom: 18px; }
+    h1 { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 18px; }
     .kop { margin-bottom: 14px; }
     .kop td { padding: 1px 4px; vertical-align: top; }
     .kop td:first-child { width: 150px; font-weight: bold; }
     table.log { width: 100%; border-collapse: collapse; }
-    table.log th, table.log td { border: 1px solid #000; padding: 3px 6px; vertical-align: top; }
-    table.log th { background: #d9e2f0; text-align: center; font-size: 11px; }
+    table.log th, table.log td { border: 1px solid #000; padding: 3px 6px; vertical-align: middle; }
+    table.log th { text-align: center; font-size: 11.5px; }
     td.num { text-align: center; white-space: nowrap; }
-    td.tgl { white-space: nowrap; }
-    tr.subtotal td, tr.total td { font-weight: bold; background: #f2f2f2; }
-    tr.total td { background: #d9e2f0; }
+    td.tempat { text-align: center; }
+    .biru { background: #b8cce4; }     /* port work & waiting rows */
+    .hijau { background: #c6e0b4; }    /* Total Kegiatan A/B and A+B rows */
+    .kuning { background: #ffd966; }   /* Prorata and DEMURRAGE rows */
+    tr.subtotal td, tr.total td { font-weight: bold; }
     .ttd { margin-top: 36px; width: 100%; }
     .ttd td { width: 50%; text-align: center; padding-top: 4px; }
     .ttd .ruang { height: 64px; }
@@ -59,66 +63,67 @@
     <table class="log">
       <thead>
         <tr>
-          <th rowspan="2" style="width:26px">No.</th>
-          <th rowspan="2">Kegiatan</th>
-          <th colspan="2">Total</th>
-          <th rowspan="2">Berangkat dari</th>
-          <th colspan="2">Mulai</th>
-          <th rowspan="2">Tiba di</th>
-          <th colspan="2">Selesai</th>
+          <th rowspan="2" style="width:210px">KETERANGAN</th>
+          <th colspan="2">TOTAL</th>
+          <th colspan="6">KEGIATAN</th>
         </tr>
         <tr>
-          <th style="width:40px">Hari</th><th style="width:52px">Waktu</th>
-          <th style="width:78px">Tanggal</th><th style="width:44px">Jam</th>
-          <th style="width:78px">Tanggal</th><th style="width:44px">Jam</th>
+          <th style="width:44px">HARI</th><th style="width:56px">WAKTU</th>
+          <th style="width:128px">BERANGKAT</th>
+          <th style="width:76px">TGL</th><th style="width:48px">PUKUL</th>
+          <th style="width:128px">TIBA</th>
+          <th style="width:76px">TGL</th><th style="width:48px">PUKUL</th>
         </tr>
       </thead>
       <tbody>
         {% for r in rows %}
           {% if r.kind == "activity" %}
           <tr>
-            <td class="num">{{ r.no }}</td>
-            <td>{{ r.label }}{% if r.note %} ({{ r.note }}){% endif %}</td>
-            <td class="num">{{ r.hari }}</td>
-            <td class="num">{{ r.waktu }}</td>
-            <td>{{ r.from_location|default:"" }}</td>
-            <td class="tgl num">{{ r.start|date:"d-m-Y" }}</td>
-            <td class="num">{{ r.start|date:"H:i" }}</td>
-            <td>{{ r.to_location|default:"" }}</td>
-            <td class="tgl num">{% if r.end %}{{ r.end|date:"d-m-Y" }}{% endif %}</td>
-            <td class="num">{% if r.end %}{{ r.end|date:"H:i" }}{% endif %}</td>
+            <td {% if r.fill %}class="biru"{% endif %}>{{ r.label }}{% if r.note %} ({{ r.note }}){% endif %}</td>
+            <td class="num {% if r.fill %}biru{% endif %}">{{ r.hari }}</td>
+            <td class="num {% if r.fill %}biru{% endif %}">{{ r.waktu }}</td>
+            {% if r.rowspan %}<td class="tempat" rowspan="{{ r.rowspan }}">{{ r.seg_from|default:"" }}</td>{% endif %}
+            <td class="num">{{ r.start|date:"j-M-y" }}</td>
+            <td class="num">{{ r.start|date:"H.i" }}</td>
+            {% if r.rowspan %}<td class="tempat" rowspan="{{ r.rowspan }}">{{ r.seg_to|default:"" }}</td>{% endif %}
+            <td class="num">{% if r.end %}{{ r.end|date:"j-M-y" }}{% endif %}</td>
+            <td class="num">{% if r.end %}{{ r.end|date:"H.i" }}{% endif %}</td>
           </tr>
           {% else %}
           <tr class="subtotal">
-            <td></td>
-            <td>{{ r.label }}</td>
-            <td class="num">{{ r.hari }}</td>
-            <td class="num">{{ r.waktu }}</td>
+            <td class="hijau">{{ r.label }}</td>
+            <td class="num hijau">{{ r.hari }}</td>
+            <td class="num hijau">{{ r.waktu }}</td>
             <td colspan="6"></td>
           </tr>
           {% endif %}
         {% endfor %}
+        {% if combined %}
+        <tr class="total">
+          <td class="hijau">{{ combined.label }}</td>
+          <td class="num hijau">{{ combined.hari }}</td>
+          <td class="num hijau">{{ combined.waktu }}</td>
+          <td colspan="6"></td>
+        </tr>
+        {% endif %}
         {% if grand %}
         <tr class="total">
           <td></td>
-          <td>Total Kegiatan Muat - Bongkar</td>
           <td class="num">{{ grand.hari }}</td>
           <td class="num">{{ grand.waktu }}</td>
           <td colspan="6"></td>
         </tr>
         {% endif %}
         <tr class="subtotal">
-          <td></td>
-          <td>Prorata Muat - Bongkar Sesuai Kontrak</td>
-          <td class="num">{{ prorata }}</td>
-          <td></td>
+          <td class="kuning">Prorata Muat - Bongkar Sesuai Kontrak</td>
+          <td class="num kuning">{{ prorata }}</td>
+          <td class="kuning"></td>
           <td colspan="6"></td>
         </tr>
         <tr class="subtotal">
-          <td></td>
-          <td>DEMURRAGE</td>
-          <td class="num">{{ demurrage }}</td>
-          <td></td>
+          <td class="kuning">DEMURRAGE</td>
+          <td class="num kuning">{{ demurrage }}</td>
+          <td class="kuning"></td>
           <td colspan="6"></td>
         </tr>
       </tbody>

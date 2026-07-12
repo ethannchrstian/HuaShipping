@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ voyage.code }} · {{ voyage.vessel.tug_name }}{% endblock %}
+{% block container %}max-w-[1400px]{% endblock %}
 {% block content %}
 <p class="text-[14px] text-ink-soft"><a href="{% url 'rekap' %}" class="font-[550] text-action hover:underline">Ringkasan</a> <span class="text-ink-faint">/</span> {{ voyage.code }}</p>
 
@@ -38,8 +39,9 @@
   </dl>
 </header>
 
+<div class="mt-5 grid items-start gap-5 xl:grid-cols-[1.2fr_1fr]">
 {% if summary.port_time %}
-<section class="card mt-5 animate-rise p-5" style="animation-delay: 80ms" aria-label="Ringkasan waktu">
+<section class="card animate-rise p-5" style="animation-delay: 80ms" aria-label="Ringkasan waktu">
   {% for b in summary.blocks %}
   <div class="flex items-baseline justify-between gap-4 border-b border-line-soft py-2.5">
     <span class="text-[15px] text-ink-soft">{{ b.label }}</span>
@@ -69,7 +71,7 @@
 </section>
 {% endif %}
 
-<section class="card mt-5 animate-rise overflow-hidden" style="animation-delay: 160ms" aria-label="Muatan">
+<section class="card animate-rise self-stretch overflow-hidden" style="animation-delay: 160ms" aria-label="Muatan">
   <h2 class="px-5 pt-5 text-[17px] font-[650]">Muatan</h2>
   {% if parcels %}
   <div class="mt-3 overflow-x-auto">
@@ -96,6 +98,7 @@
   </div>
   {% else %}<p class="px-5 pb-5 pt-2 text-[15px] text-ink-soft">Belum ada data muatan.</p>{% endif %}
 </section>
+</div>
 
 <section class="card mt-5 animate-rise overflow-hidden" style="animation-delay: 240ms" aria-label="Kegiatan">
   <h2 class="px-5 pt-5 text-[17px] font-[650]">Kegiatan</h2>
@@ -103,38 +106,41 @@
     <table class="w-full text-[15px]">
       <thead>
         <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
-          <th scope="col" class="px-5 py-3 font-[600]">Kegiatan</th>
-          <th scope="col" class="px-5 py-3 font-[600]">Mulai</th>
-          <th scope="col" class="px-5 py-3 font-[600]">Selesai</th>
-          <th scope="col" class="px-5 py-3 text-right font-[600]">Lama</th>
-          <th scope="col" class="px-5 py-3 font-[600]">Catatan</th>
-          {% if not voyage.locked %}<th scope="col" class="px-5 py-3"><span class="sr-only">Aksi</span></th>{% endif %}
+          <th scope="col" class="w-10 px-3 py-3 text-right font-[600]">No.</th>
+          <th scope="col" class="px-4 py-3 font-[600]">Kegiatan</th>
+          <th scope="col" class="px-4 py-3 font-[600]">Mulai</th>
+          <th scope="col" class="px-4 py-3 font-[600]">Selesai</th>
+          <th scope="col" class="px-4 py-3 text-right font-[600]">Lama</th>
+          <th scope="col" class="px-4 py-3 font-[600]">Catatan</th>
+          {% if not voyage.locked %}<th scope="col" class="px-4 py-3"><span class="sr-only">Aksi</span></th>{% endif %}
         </tr>
       </thead>
       <tbody>
         {% for row in timeline %}
         <tr class="border-t border-line-soft
                    {% if editing_activity and editing_activity.pk == row.activity.pk %}bg-action-tint
-                   {% elif row.ongoing %}bg-info-bg/60{% endif %}
+                   {% elif row.ongoing %}bg-info-bg/60
+                   {% elif forloop.counter|divisibleby:2 %}bg-[#f8fafc]{% endif %}
                    {% if row.is_sailing %}shadow-[inset_3px_0_0_0_#9db8dd]{% endif %}">
-          <td class="whitespace-nowrap px-5 py-3.5 font-[550]">{{ row.activity.activity_type.label_id }}</td>
-          <td class="whitespace-nowrap px-5 py-3.5 tabular-nums">{{ row.activity.start_at|date:"j M Y H:i" }}</td>
-          <td class="whitespace-nowrap px-5 py-3.5 tabular-nums">{% if row.activity.end_at %}{{ row.activity.end_at|date:"j M Y H:i" }}{% else %}<em class="text-info-ink">masih berjalan</em>{% endif %}</td>
-          <td class="whitespace-nowrap px-5 py-3.5 text-right tabular-nums">{{ row.duration }}</td>
-          <td class="max-w-72 px-5 py-3.5 text-[14px] text-ink-soft">
+          <td class="whitespace-nowrap px-3 py-3.5 text-right tabular-nums text-ink-faint">{{ forloop.counter }}</td>
+          <td class="whitespace-nowrap px-4 py-3.5 text-[15px] font-[600]">{{ row.activity.activity_type.label_id }}</td>
+          <td class="whitespace-nowrap px-4 py-3.5 tabular-nums">{{ row.activity.start_at|date:"j M Y H:i" }}</td>
+          <td class="whitespace-nowrap px-4 py-3.5 tabular-nums">{% if row.activity.end_at %}{{ row.activity.end_at|date:"j M Y H:i" }}{% else %}<em class="text-info-ink">masih berjalan</em>{% endif %}</td>
+          <td class="whitespace-nowrap px-4 py-3.5 text-right tabular-nums">{{ row.duration }}</td>
+          <td class="max-w-72 px-4 py-3.5 text-[14px] text-ink-soft">
             {% if row.is_sailing and row.activity.from_location %}{{ row.activity.from_location }} → {{ row.activity.to_location }}. {% endif %}{{ row.activity.note }}
           </td>
           {% if not voyage.locked %}
-          <td class="whitespace-nowrap px-5 py-3.5 text-right"><a class="text-[14px] font-[550] text-action hover:underline" href="{% url 'activity_edit' row.activity.pk %}#entri">Ubah</a></td>
+          <td class="whitespace-nowrap px-4 py-3.5 text-right"><a class="text-[14px] font-[550] text-action hover:underline" href="{% url 'activity_edit' row.activity.pk %}#entri">Ubah</a></td>
           {% endif %}
         </tr>
         {% if row.warning %}
         <tr class="{% if row.warning_kind == 'gap' %}bg-live-bg text-live-ink{% else %}bg-bad-bg text-bad-ink{% endif %}">
-          <td colspan="{% if voyage.locked %}5{% else %}6{% endif %}" class="px-5 py-2.5 text-[14px]">{{ row.warning }}</td>
+          <td colspan="{% if voyage.locked %}6{% else %}7{% endif %}" class="px-4 py-2.5 text-[14px]">{{ row.warning }}</td>
         </tr>
         {% endif %}
         {% empty %}
-        <tr><td colspan="{% if voyage.locked %}5{% else %}6{% endif %}" class="border-t border-line-soft px-5 py-10 text-center text-ink-soft">Belum ada kegiatan tercatat — mulai dengan perjalanan ke lokasi muat di bawah.</td></tr>
+        <tr><td colspan="{% if voyage.locked %}6{% else %}7{% endif %}" class="border-t border-line-soft px-4 py-10 text-center text-ink-soft">Belum ada kegiatan tercatat — mulai dengan perjalanan ke lokasi muat di bawah.</td></tr>
         {% endfor %}
       </tbody>
     </table>

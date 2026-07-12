@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
+{% block container %}max-w-[1400px]{% endblock %}
 {% block content %}
 <p class="text-[14px] text-ink-soft"><a href="{% url 'rekap' %}" class="font-[550] text-action hover:underline">Ringkasan</a> <span class="text-ink-faint">/</span> {{ title }}</p>
 <div class="mt-3">
@@ -7,39 +8,98 @@
   <p class="mt-1 text-[15px] text-ink-soft">Semua tanggal dan hari dihitung dari catatan kegiatan — di sini cukup data kontraknya.</p>
 </div>
 
-<form method="post" novalidate class="mt-6">
+<form method="post" novalidate class="mt-6 max-w-[980px]">
   {% csrf_token %}
+  {% for e in form.non_field_errors %}<p class="mb-3 rounded-lg bg-bad-bg px-4 py-3 text-[14px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+
   <section class="card animate-rise p-5">
-    <h2 class="text-[17px] font-[650]">Voyage</h2>
-    {% for e in form.non_field_errors %}<p class="mt-2 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {% for field in form %}
-        {% if field.name != "notes" %}
-        <div>
-          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {{ field }}
-          {% if field.help_text %}<p class="mt-1 text-[13px] text-ink-faint">{{ field.help_text }}</p>{% endif %}
-          {% for e in field.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-        </div>
-        {% endif %}
-      {% endfor %}
-    </div>
-    <div class="mt-4">
-      <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
-      {{ form.notes }}
-      {% for e in form.notes.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+    <h2 class="text-[16px] font-[650]">1 · Kapal &amp; identitas</h2>
+    <p class="mt-0.5 text-[13px] text-ink-soft">Kode voyage terisi otomatis dari voyage terakhir kapal — boleh diubah.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.vessel.id_for_label }}">{{ form.vessel.label }}</label>
+        {{ form.vessel }}
+        {% for e in form.vessel.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+        {{ form.code }}
+        {% for e in form.code.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.charterer.id_for_label }}">{{ form.charterer.label }}</label>
+        {{ form.charterer }}
+        {% for e in form.charterer.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
     </div>
   </section>
 
-  <section class="card mt-5 animate-rise p-5" style="animation-delay: 80ms">
-    <h2 class="text-[17px] font-[650]">Muatan</h2>
-    <p class="mt-1 text-[14px] text-ink-soft">Satu baris per muatan. Baris kosong diabaikan.</p>
+  <section class="card mt-4 animate-rise p-5" style="animation-delay: 60ms">
+    <h2 class="text-[16px] font-[650]">2 · Dokumen kontrak</h2>
+    <p class="mt-0.5 text-[13px] text-ink-soft">Salin persis dari kontrak dan kwitansinya.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.contract_no.id_for_label }}">{{ form.contract_no.label }}</label>
+        {{ form.contract_no }}
+        {% for e in form.contract_no.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.invoice_no.id_for_label }}">{{ form.invoice_no.label }}</label>
+        {{ form.invoice_no }}
+        {% for e in form.invoice_no.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="card mt-4 animate-rise p-5" style="animation-delay: 120ms">
+    <h2 class="text-[16px] font-[650]">3 · Waktu kontrak (prorata)</h2>
+    <p class="mt-0.5 text-[13px] text-ink-soft">Isi <span class="font-[600] text-ink">total saja</span> (kontrak 2026), <span class="font-[600] text-ink">atau muat + bongkar keduanya</span> (kontrak 2025) — total dihitung sendiri.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_days.id_for_label }}">{{ form.laytime_days.label }}</label>
+        {{ form.laytime_days }}
+        {% for e in form.laytime_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_load_days.id_for_label }}">{{ form.laytime_load_days.label }}</label>
+        {{ form.laytime_load_days }}
+        {% for e in form.laytime_load_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_discharge_days.id_for_label }}">{{ form.laytime_discharge_days.label }}</label>
+        {{ form.laytime_discharge_days }}
+        {% for e in form.laytime_discharge_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="card mt-4 animate-rise p-5" style="animation-delay: 180ms">
+    <h2 class="text-[16px] font-[650]">4 · Demurrage &amp; tujuan</h2>
+    <p class="mt-0.5 text-[13px] text-ink-soft">Tarif per hari dari kontrak — kosongkan bila kontrak menulis “-”. Jetty muat diisi di bagian Muatan di bawah.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.demurrage_rate_idr.id_for_label }}">{{ form.demurrage_rate_idr.label }}</label>
+        {{ form.demurrage_rate_idr }}
+        {% for e in form.demurrage_rate_idr.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.discharge_jetty.id_for_label }}">{{ form.discharge_jetty.label }}</label>
+        {{ form.discharge_jetty }}
+        {% for e in form.discharge_jetty.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="card mt-4 animate-rise p-5" style="animation-delay: 240ms">
+    <h2 class="text-[16px] font-[650]">5 · Muatan</h2>
+    <p class="mt-0.5 text-[13px] text-ink-soft">Satu baris per muatan — jetty muat diisi di sini (rute voyage dihitung dari jetty ini). Baris kosong diabaikan.</p>
     {{ formset.management_form }}
     {% for e in formset.non_form_errors %}<p class="mt-2 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
     {% for pform in formset %}
-      <div class="mt-4 rounded-lg border border-line-soft bg-[#f8fafc] p-4 first-of-type:mt-4">
+      <div class="mt-4 rounded-lg border border-line-soft bg-[#f8fafc] p-4">
+        <p class="text-[12.5px] font-[650] uppercase tracking-wider text-ink-faint">Muatan {{ forloop.counter }}</p>
         {% for hidden in pform.hidden_fields %}{{ hidden }}{% endfor %}
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {% for field in pform.visible_fields %}
             <div {% if field.name == 'DELETE' %}class="flex items-end gap-2 pb-2"{% endif %}>
               {% if field.name == 'DELETE' %}
@@ -55,6 +115,15 @@
         </div>
       </div>
     {% endfor %}
+  </section>
+
+  <section class="card mt-4 animate-rise p-5" style="animation-delay: 300ms">
+    <h2 class="text-[16px] font-[650]">6 · Catatan</h2>
+    <div class="mt-3">
+      <label class="sr-only" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+      {{ form.notes }}
+      {% for e in form.notes.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+    </div>
   </section>
 
   <div class="mt-5 flex items-center gap-2.5">

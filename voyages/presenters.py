@@ -469,51 +469,151 @@ def voyage_year(v: Voyage) -> int | None:
     return None
 
 
+def _periode(v: Voyage) -> tuple:
+    """(start, end) of a voyage from its activity log; end only when completed."""
+    acts = list(v.activities.all())
+    start = acts[0].start_at if acts else None
+    end = None
+    if acts and v.status != Voyage.Status.ONGOING:
+        end = acts[-1].end_at or acts[-1].start_at
+    return start, end
+
+
+def _performa(port, laytime) -> dict:
+    """Kontrak-performance chip — the honest stand-in for the mock's on-time %."""
+    if laytime is None:
+        return {"label": "Tanpa kontrak", "kind": "neutral"}
+    if port is None:
+        return {"label": "Belum ada catatan", "kind": "neutral"}
+    over = port.days - laytime
+    if over > 0:
+        return {"label": f"Lebih {over} hari", "kind": "bad"}
+    return {"label": "Sesuai kontrak", "kind": "ok"}
+
+
+def _year_totals(voyages, year: int) -> dict:
+    n = port_days = dem = 0
+    mt = Decimal(0)
+    for v in voyages:
+        if voyage_year(v) != year:
+            continue
+        n += 1
+        port = total_port_time(v.domain_activities())
+        port_days += port.days if port else 0
+        laytime = int(v.laytime_days) if v.laytime_days is not None else None
+        if v.demurrage_rate_idr:
+            dem += demurrage_days(port, laytime) or 0
+        mt += sum((p.quantity_mt for p in v.parcels.all()), Decimal(0))
+    return {"n_voyages": n, "mt": num_id(int(mt)), "port_days": port_days, "dem_days": dem}
+
+
 def fleet_cards(vessels) -> list[dict]:
-    """Armada page: per vessel — what it is doing right now, this-year totals,
-    and its full voyage history (all recomputed from the activity log)."""
+    """Armada page: per vessel — identity, posisi sekarang, this-year performa
+    tiles, and the three latest voyages (full history lives on the riwayat page)."""
     year = timezone.localtime().year
     cards = []
     for vessel in vessels:
-        voyages = list(
-            vessel.voyages.prefetch_related("activities__activity_type", "parcels__load_jetty")
+        voyages = sorted(
+            vessel.voyages.prefetch_related("activities__activity_type", "parcels__load_jetty"),
+            key=lambda v: v.code,
+            reverse=True,
         )
         ongoing = next((v for v in voyages if v.status == Voyage.Status.ONGOING), None)
-        doing = None
+        now = {}
         if ongoing:
             last = ongoing.activities.select_related("activity_type").last()
             if last is None:
-                doing = "belum ada kegiatan tercatat"
+                doing, since = "Belum ada kegiatan tercatat", None
             elif last.activity_type.is_sailing and last.to_location:
-                doing = f"sedang {last.activity_type.label_id} menuju {last.to_location}"
+                doing, since = f"{last.activity_type.label_id} menuju {last.to_location}", last.start_at
             else:
-                doing = f"sedang {last.activity_type.label_id}"
-        n = port_days = dem = 0
-        mt = Decimal(0)
-        for v in voyages:
-            if voyage_year(v) != year:
-                continue
-            n += 1
-            port = total_port_time(v.domain_activities())
-            port_days += port.days if port else 0
-            laytime = int(v.laytime_days) if v.laytime_days is not None else None
-            if v.demurrage_rate_idr:
-                dem += demurrage_days(port, laytime) or 0
-            mt += sum((p.quantity_mt for p in v.parcels.all()), Decimal(0))
+                doing, since = last.activity_type.label_id, last.start_at
+            step, _ = PHASE_TRACK.get(last.activity_type.phase, (0, 4)) if last else (0, 4)
+            chip_label, chip_kind = PHASE_CHIP[step]
+            frm, to = route_ends(ongoing)
+            start, _ = _periode(ongoing)
+            mt = sum((p.quantity_mt for p in ongoing.parcels.all()), Decimal(0))
+            now = {
+                "doing": doing,
+                "since_days": (timezone.now() - since).days if since else None,
+                "chip_label": chip_label if last else None,
+                "chip_kind": chip_kind if last else None,
+                "route_from": frm,
+                "route_to": to,
+                "started": start,
+                "mt": num_id(int(mt)) if mt else None,
+            }
+        else:
+            done = next((v for v in voyages if v.status != Voyage.Status.ONGOING), None)
+            if done:
+                _, end = _periode(done)
+                port = total_port_time(done.domain_activities())
+                laytime = int(done.laytime_days) if done.laytime_days is not None else None
+                now = {
+                    "idle_since": end,
+                    "last_voyage": done,
+                    "last_route": route(done),
+                    "last_performa": _performa(port, laytime),
+                }
+        last3 = []
+        for v in voyages[:3]:
+            start, end = _periode(v)
+            last3.append({"voyage": v, "route": route(v), "start": start, "end": end})
         cards.append(
             {
                 "vessel": vessel,
                 "ongoing": ongoing,
-                "doing": doing,
-                "rows": list_rows(sorted(voyages, key=lambda v: v.code, reverse=True)),
+                "now": now,
+                "last3": last3,
                 "year": year,
-                "n_voyages": n,
-                "mt": num_id(int(mt)),
-                "port_days": port_days,
-                "dem_days": dem,
+                **_year_totals(voyages, year),
             }
         )
     return cards
+
+
+def vessel_history(vessel, year: int) -> dict:
+    """Riwayat page: header totals + one recomputed row per voyage of `year`."""
+    voyages = sorted(
+        (
+            v
+            for v in vessel.voyages.prefetch_related(
+                "activities__activity_type", "parcels__load_jetty"
+            )
+            if voyage_year(v) == year
+        ),
+        key=lambda v: v.code,
+        reverse=True,
+    )
+    rows = []
+    n_ok = n_kontrak = 0
+    for v in voyages:
+        acts = v.domain_activities()
+        port = total_port_time(acts)
+        laytime = int(v.laytime_days) if v.laytime_days is not None else None
+        start, end = _periode(v)
+        mt = sum((p.quantity_mt for p in v.parcels.all()), Decimal(0))
+        dem = demurrage_days(port, laytime)
+        completed = v.status != Voyage.Status.ONGOING
+        if completed and laytime is not None and port is not None:
+            n_kontrak += 1
+            if port.days <= laytime:
+                n_ok += 1
+        rows.append(
+            {
+                "voyage": v,
+                "route": route(v),
+                "start": start,
+                "end": end,
+                "mt": num_id(int(mt)) if mt else None,
+                "port_days": port.days if port else 0,
+                "laytime": laytime,
+                "dem": dem,
+                "performa": _performa(port, laytime) if completed else None,
+            }
+        )
+    pct = round(n_ok / n_kontrak * 100) if n_kontrak else None
+    return {"rows": rows, "pct_kontrak": pct, **_year_totals(voyages, year)}
 
 
 def kpis(voyages, year: int) -> dict:

@@ -1,69 +1,103 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Armada{% endblock %}
 {% block container %}max-w-[1400px]{% endblock %}
 {% block content %}
-<header class="animate-rise">
-  <h1 class="text-[26px] font-bold tracking-tight">Armada</h1>
-  <p class="mt-1 text-[15px] text-ink-soft">Setiap pasangan tugboat &amp; tongkang — posisi sekarang, capaian tahun ini, dan riwayat voyage lengkap.</p>
+<header class="flex flex-wrap items-start justify-between gap-4 animate-rise">
+  <div>
+    <h1 class="text-[26px] font-bold tracking-tight">Armada</h1>
+    <p class="mt-1 text-[15px] text-ink-soft">Setiap pasangan tugboat &amp; tongkang — posisi sekarang, performa tahun ini, dan riwayat voyage.</p>
+  </div>
+  <a class="btn btn-secondary" href="{% url 'master_create' 'kapal' %}">+ Tambah kapal</a>
 </header>
 
-<div class="mt-6 space-y-6">
+<div class="mt-6 space-y-5">
   {% for f in fleet %}
   <section class="card animate-rise overflow-hidden" {% if not forloop.first %}style="animation-delay: {{ forloop.counter0 }}0ms"{% endif %} aria-label="{{ f.vessel.tug_name }}">
-    <div class="flex flex-wrap items-start justify-between gap-4 px-5 pt-5">
-      <div>
-        <h2 class="text-[19px] font-[700] tracking-tight">{{ f.vessel.tug_name }} <span class="text-[15px] font-[500] text-ink-soft">&amp; {{ f.vessel.barge_name }}</span></h2>
-        <p class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14.5px] text-ink-soft">
-          {% if not f.vessel.active %}
-            <span class="chip bg-[#f2f4f7] text-ink-soft">Nonaktif</span>
-          {% elif f.ongoing %}
-            <span class="chip chip-info">Berjalan</span>
-            <span><a class="font-[600] text-action hover:underline" href="{% url 'voyage_detail' f.ongoing.pk %}">{{ f.ongoing.code }}</a> — {{ f.doing }}</span>
-          {% else %}
-            <span class="chip chip-ok">Siap</span>
-            <span>Tidak ada voyage berjalan.</span>
+    <div class="grid gap-6 p-5 lg:grid-cols-[1.1fr_1fr_1.1fr] lg:divide-x lg:divide-line-soft">
+
+      <div class="flex items-start gap-4">
+        <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#eff4fb] p-2">
+          <img src="{% static 'voyages/ship.png' %}" alt="" class="max-h-full max-w-full">
+        </span>
+        <div class="min-w-0">
+          <h2 class="text-[17px] font-[700] tracking-tight">{{ f.vessel.tug_name }}</h2>
+          <p class="text-[13.5px] text-ink-soft">{{ f.vessel.barge_name }}</p>
+          <p class="mt-2">
+            {% if not f.vessel.active %}<span class="chip bg-[#f2f4f7] text-ink-soft">Nonaktif</span>
+            {% elif f.ongoing %}<span class="chip chip-info">Berjalan</span>
+            {% else %}<span class="chip chip-ok">Siap</span>{% endif %}
+          </p>
+          {% if f.ongoing and f.now.route_from or f.ongoing and f.now.route_to %}
+          <p class="mt-2.5 flex items-center gap-2 text-[14px]">
+            <span class="font-[600]">{{ f.now.route_from|default:"?" }}</span>
+            <span class="text-ink-faint" aria-hidden="true">→</span>
+            <span class="font-[600]">{{ f.now.route_to|default:"?" }}</span>
+          </p>
           {% endif %}
-        </p>
+          {% if f.ongoing %}
+          <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-ink-soft">
+            {% if f.now.started %}<div><dt class="inline">Berangkat:</dt> <dd class="inline font-[600] text-ink">{{ f.now.started|date:"j M Y" }}</dd></div>{% endif %}
+            {% if f.now.mt %}<div><dt class="inline">Muatan:</dt> <dd class="inline font-[600] text-ink">{{ f.now.mt }} MT</dd></div>{% endif %}
+          </dl>
+          {% endif %}
+        </div>
       </div>
-      <dl class="grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-4">
-        <div><dt class="text-[12.5px] text-ink-soft">Voyage {{ f.year }}</dt><dd class="mt-0.5 text-[18px] font-[700] tabular-nums">{{ f.n_voyages }}</dd></div>
-        <div><dt class="text-[12.5px] text-ink-soft">Muatan {{ f.year }} (MT)</dt><dd class="mt-0.5 text-[18px] font-[700] tabular-nums">{{ f.mt }}</dd></div>
-        <div><dt class="text-[12.5px] text-ink-soft">Hari pelabuhan {{ f.year }}</dt><dd class="mt-0.5 text-[18px] font-[700] tabular-nums">{{ f.port_days }}</dd></div>
-        <div><dt class="text-[12.5px] text-ink-soft">Hari demurrage {{ f.year }}</dt><dd class="mt-0.5 text-[18px] font-[700] tabular-nums {% if f.dem_days %}text-bad-ink{% endif %}">{{ f.dem_days }}</dd></div>
-      </dl>
+
+      <div class="lg:pl-6">
+        <p class="text-[11.5px] font-[650] uppercase tracking-wider text-ink-faint">Posisi sekarang</p>
+        {% if f.ongoing %}
+        <p class="mt-2.5 text-[15.5px] font-[650]">{{ f.now.doing }}</p>
+        <p class="mt-1 text-[13.5px] text-ink-soft">
+          Voyage <a class="font-[600] text-action hover:underline" href="{% url 'voyage_detail' f.ongoing.pk %}">{{ f.ongoing.code }}</a>
+          {% if f.now.since_days is not None %} · {% if f.now.since_days == 0 %}dimulai hari ini{% else %}sudah {{ f.now.since_days }} hari{% endif %}{% endif %}
+        </p>
+        {% if f.now.chip_label %}<p class="mt-2.5"><span class="chip chip-{{ f.now.chip_kind }}">{{ f.now.chip_label }}</span></p>{% endif %}
+        {% elif not f.vessel.active %}
+        <p class="mt-2.5 text-[15.5px] font-[650] text-ink-soft">Tidak beroperasi</p>
+        {% elif f.now.last_voyage %}
+        <p class="mt-2.5 text-[15.5px] font-[650]">Siap — menunggu voyage berikutnya</p>
+        <p class="mt-1 text-[13.5px] text-ink-soft">
+          Voyage terakhir <a class="font-[600] text-action hover:underline" href="{% url 'voyage_detail' f.now.last_voyage.pk %}">{{ f.now.last_voyage.code }}</a>
+          ({{ f.now.last_route }}){% if f.now.idle_since %} selesai {{ f.now.idle_since|date:"j M Y" }}{% endif %}
+          — <span class="{% if f.now.last_performa.kind == 'bad' %}text-bad-ink{% elif f.now.last_performa.kind == 'ok' %}text-ok-ink{% endif %} font-[550]">{{ f.now.last_performa.label|lower }}</span>
+        </p>
+        {% else %}
+        <p class="mt-2.5 text-[15.5px] font-[650]">Siap — belum pernah voyage</p>
+        {% endif %}
+      </div>
+
+      <div class="lg:pl-6">
+        <p class="text-[11.5px] font-[650] uppercase tracking-wider text-ink-faint">Performa tahun {{ f.year }}</p>
+        <div class="mt-2.5 grid grid-cols-2 gap-2.5">
+          <div class="rounded-lg bg-info-bg px-3.5 py-2.5"><p class="text-[18px] font-[700] tabular-nums text-info-ink">{{ f.n_voyages }}</p><p class="text-[12.5px] text-ink-soft">Voyage</p></div>
+          <div class="rounded-lg bg-ok-bg px-3.5 py-2.5"><p class="text-[18px] font-[700] tabular-nums text-ok-ink">{{ f.mt }}</p><p class="text-[12.5px] text-ink-soft">MT muatan</p></div>
+          <div class="rounded-lg bg-live-bg px-3.5 py-2.5"><p class="text-[18px] font-[700] tabular-nums text-live-ink">{{ f.port_days }}</p><p class="text-[12.5px] text-ink-soft">Hari pelabuhan</p></div>
+          <div class="rounded-lg bg-bad-bg px-3.5 py-2.5"><p class="text-[18px] font-[700] tabular-nums text-bad-ink">{{ f.dem_days }}</p><p class="text-[12.5px] text-ink-soft">Hari demurrage</p></div>
+        </div>
+      </div>
     </div>
 
-    {% if f.rows %}
-    <div class="mt-4 overflow-x-auto">
-      <table class="w-full text-[14.5px]">
-        <thead>
-          <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
-            <th scope="col" class="px-5 py-2.5 font-[600]">Voyage</th>
-            <th scope="col" class="px-4 py-2.5 font-[600]">Rute</th>
-            <th scope="col" class="px-4 py-2.5 font-[600]">Mulai</th>
-            <th scope="col" class="px-4 py-2.5 text-right font-[600]">Hari pelabuhan</th>
-            <th scope="col" class="px-4 py-2.5 font-[600]">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in f.rows %}
-          <tr class="cursor-pointer border-t border-line-soft transition-colors hover:bg-[#f5f8fc]"
-              onclick="window.location='{% url 'voyage_detail' r.voyage.pk %}'">
-            <td class="whitespace-nowrap px-5 py-3"><a class="font-[650] text-action hover:underline" href="{% url 'voyage_detail' r.voyage.pk %}">{{ r.voyage.code }}</a></td>
-            <td class="min-w-60 px-4 py-3">{{ r.route }}</td>
-            <td class="whitespace-nowrap px-4 py-3 tabular-nums">{% if r.start %}{{ r.start|date:"j M Y" }}{% else %}—{% endif %}</td>
-            <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums">{{ r.port_days }}{% if r.laytime %} / {{ r.laytime }}{% endif %}{% if r.over %} <span class="font-[600] text-bad-ink">+{{ r.over_days }}</span>{% endif %}</td>
-            <td class="whitespace-nowrap px-4 py-3">
-              {% if r.voyage.status == "ONGOING" %}<span class="chip chip-info">Berjalan</span>
-              {% else %}<span class="chip chip-ok">Selesai</span>{% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    {% if f.last3 %}
+    <div class="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line-soft bg-[#fafbfd] px-5 py-4">
+      <p class="text-[11.5px] font-[650] uppercase tracking-wider text-ink-faint">Voyage terakhir</p>
+      {% for r in f.last3 %}
+      <div class="flex min-w-0 items-center gap-3">
+        <div class="min-w-0">
+          <a class="text-[14px] font-[650] text-action hover:underline" href="{% url 'voyage_detail' r.voyage.pk %}">{{ r.voyage.code }}</a>
+          <p class="truncate text-[13px] text-ink-soft">{{ r.route }}</p>
+        </div>
+        <p class="whitespace-nowrap text-[13px] tabular-nums text-ink-soft">
+          {% if r.start %}{{ r.start|date:"j M" }}{% if r.end %} – {{ r.end|date:"j M Y" }}{% else %} {{ r.start|date:"Y" }}{% endif %}{% else %}—{% endif %}
+        </p>
+        {% if r.voyage.status == "ONGOING" %}<span class="chip chip-info">Berjalan</span>
+        {% else %}<span class="chip chip-ok">Selesai</span>{% endif %}
+      </div>
+      {% endfor %}
+      <a class="btn btn-secondary ml-auto" href="{% url 'armada_riwayat' f.vessel.pk %}">Lihat riwayat lengkap →</a>
     </div>
     {% else %}
-    <p class="border-t border-line-soft px-5 py-6 text-[14.5px] text-ink-soft">Belum ada voyage untuk kapal ini.</p>
+    <p class="border-t border-line-soft px-5 py-5 text-[14.5px] text-ink-soft">Belum ada voyage untuk kapal ini.</p>
     {% endif %}
   </section>
   {% empty %}

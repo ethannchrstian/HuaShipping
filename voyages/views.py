@@ -491,3 +491,27 @@ def master_edit(request, jenis, pk=None):
 def armada(request):
     vessels = Vessel.objects.order_by("-active", "name")
     return render(request, "voyages/armada.html", {"fleet": presenters.fleet_cards(vessels)})
+
+
+@login_required
+def armada_riwayat(request, pk):
+    vessel = get_object_or_404(Vessel, pk=pk)
+    voyages = vessel.voyages.all()
+    years = sorted(
+        {y for v in voyages if (y := presenters.voyage_year(v)) is not None}, reverse=True
+    )
+    current = timezone.localtime().year
+    try:
+        year = int(request.GET.get("tahun", ""))
+    except ValueError:
+        year = current if current in years or not years else years[0]
+    if years and year not in years:
+        year = years[0] if current not in years else current
+    context = {
+        "vessel": vessel,
+        "year": year,
+        "years": years,
+        "cards": presenters.fleet_cards([vessel]),
+        **presenters.vessel_history(vessel, year),
+    }
+    return render(request, "voyages/riwayat_kapal.html", context)

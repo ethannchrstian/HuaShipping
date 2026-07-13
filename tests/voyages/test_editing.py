@@ -321,13 +321,35 @@ class TestQuickAdd:
 
 
 class TestArmada:
-    def test_lists_every_vessel_with_status_and_history(self, admin, data):
+    def test_cards_show_status_last3_and_riwayat_link(self, admin, data):
         html = admin.get("/armada/").content.decode()
         assert "TB. HUA Navigator 1" in html and "TB. HUA Navigator 2" in html
-        assert "V2501" in html  # history reaches back across years
-        assert "sedang" in html  # ongoing vessel shows what it is doing now
+        assert "Posisi sekarang" in html and "Performa tahun" in html
+        assert "Lihat riwayat lengkap" in html
+        # only the three latest voyages inline — deep history lives on riwayat
+        assert "V2607" in html and "V2501" not in html
 
     def test_vessel_without_voyages_still_shown(self, admin, db):
         Vessel.objects.create(name="TB Uji & BG Uji", tug_name="TB Uji", barge_name="BG Uji")
         html = admin.get("/armada/").content.decode()
         assert "TB Uji" in html and "Belum ada voyage untuk kapal ini." in html
+
+
+class TestRiwayatKapal:
+    def test_current_year_rows_with_performa(self, admin, data):
+        vessel = Vessel.objects.get(name__contains="Navigator 1")
+        html = admin.get(f"/armada/{vessel.pk}/riwayat/").content.decode()
+        assert "Riwayat voyage" in html
+        assert "V2601" in html and "V2607" in html
+        assert "Sesuai kontrak" in html and "Lebih" in html
+        assert "V2501" not in html  # 2025 voyage stays out of the 2026 view
+
+    def test_year_selector_reaches_older_voyages(self, admin, data):
+        vessel = Vessel.objects.get(name__contains="Navigator 1")
+        html = admin.get(f"/armada/{vessel.pk}/riwayat/?tahun=2025").content.decode()
+        assert "V2501" in html and "V2601" not in html
+
+    def test_pct_kontrak_only_counts_completed_with_laytime(self, admin, data):
+        vessel = Vessel.objects.get(name__contains="Navigator 2")
+        html = admin.get(f"/armada/{vessel.pk}/riwayat/").content.decode()
+        assert "Sesuai kontrak" in html and "%" in html

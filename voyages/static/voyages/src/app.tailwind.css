@@ -241,25 +241,22 @@
     animation: splash-fade 0.45s ease 1.6s forwards;
   }
   .splash[hidden] { display: none; }
-  .splash-tile {
+  .splash-mark {
     position: relative;
-    width: 104px;
-    height: 104px;
-    padding: 14px;
-    border-radius: 22px;
-    background: #fff;
-    box-shadow: 0 8px 30px rgb(0 0 0 / 0.35);
+    width: min(280px, 64vw);
     animation: splash-pop 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both;
   }
-  .splash-tile img {
-    position: absolute;
-    inset: 14px;
-    width: calc(100% - 28px);
-    height: calc(100% - 28px);
-    object-fit: contain;
+  /* the logo art is navy — render it white so it reads on the navy overlay */
+  .splash-mark img {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: brightness(0) invert(1);
   }
-  .splash-logo-dim { filter: grayscale(1); opacity: 0.25; }
+  .splash-logo-dim { opacity: 0.22; }
   .splash-logo-fill {
+    position: absolute;
+    inset: 0;
     clip-path: inset(100% 0 0 0);
     animation: splash-fill 1.1s cubic-bezier(0.45, 0, 0.2, 1) 0.25s forwards;
   }
@@ -271,6 +268,25 @@
     opacity: 0;
     animation: splash-name 0.5s ease 0.55s forwards;
   }
+  /* Voyage form: numbered section rail (jump links + scroll highlight) */
+  .rail-num {
+    display: flex;
+    width: 26px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-line);
+    background: #fff;
+    font-size: 13px;
+    font-weight: 650;
+    color: var(--color-ink-soft);
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  }
+  .rail-label { font-size: 13px; font-weight: 550; color: var(--color-ink-soft); white-space: nowrap; }
+  .rail-aktif .rail-num { border-color: var(--color-action); background: var(--color-action); color: #fff; }
+  .rail-aktif .rail-label { color: var(--color-action); font-weight: 650; }
+
   @keyframes splash-pop  { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   @keyframes splash-fill { to { clip-path: inset(0 0 0 0); } }
   @keyframes splash-name { to { opacity: 0.9; } }

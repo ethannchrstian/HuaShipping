@@ -61,7 +61,15 @@ class VoyageForm(forms.ModelForm):
             "laytime_days": "Isi total saja, atau isi muat + bongkar (total dihitung sendiri)",
             "demurrage_rate_idr": "Kosongkan bila kontrak menulis “-”",
         }
-        widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
+        widgets = {
+            "contract_no": forms.TextInput(attrs={"placeholder": "Contoh: 010/HUAT-FPS/VII/2026"}),
+            "invoice_no": forms.TextInput(attrs={"placeholder": "Contoh: 017/INV/HUAT-PNLF/VI/2026"}),
+            "laytime_days": forms.NumberInput(attrs={"placeholder": "Contoh: 12"}),
+            "laytime_load_days": forms.NumberInput(attrs={"placeholder": "Contoh: 6"}),
+            "laytime_discharge_days": forms.NumberInput(attrs={"placeholder": "Contoh: 6"}),
+            "demurrage_rate_idr": forms.NumberInput(attrs={"placeholder": "Contoh: 20000000"}),
+            "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Tulis catatan di sini…"}),
+        }
 
     def clean_vessel(self):
         """One boat, one voyage: refuse a new voyage while another is berjalan."""
@@ -115,7 +123,11 @@ ParcelFormSet = inlineformset_factory(
         "load_jetty": "Jetty muat",
         "shipper": "Pengirim",
     },
-    extra=2,
+    widgets={
+        "quantity_mt": forms.NumberInput(attrs={"placeholder": "Contoh: 4000"}),
+        "shipper": forms.TextInput(attrs={"placeholder": "Nama perusahaan pengirim"}),
+    },
+    extra=1,  # one starter row; "+ Tambah muatan lain" clones more in the browser
     can_delete=True,
 )
 

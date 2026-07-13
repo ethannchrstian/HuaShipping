@@ -3,155 +3,195 @@
 {% block container %}max-w-[1400px]{% endblock %}
 {% block content %}
 <p class="text-[14px] text-ink-soft"><a href="{% url 'rekap' %}" class="font-[550] text-action hover:underline">Ringkasan</a> <span class="text-ink-faint">/</span> {{ title }}</p>
-<div class="mt-3">
-  <h1 class="text-[26px] font-bold tracking-tight">{{ title }}</h1>
-  <p class="mt-1 text-[15px] text-ink-soft">Semua tanggal dan hari dihitung dari catatan kegiatan — di sini cukup data kontraknya.</p>
+
+<div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-[26px] font-bold tracking-tight">{{ title }}</h1>
+    <p class="mt-1 text-[15px] text-ink-soft">Lengkapi informasi di bawah — cukup data kontraknya.</p>
+  </div>
+  <div class="flex items-center gap-2.5 rounded-lg border border-line bg-white px-4 py-3 text-[13.5px] text-ink-soft shadow-card">
+    <svg class="h-4 w-4 shrink-0 text-action" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <span>Semua tanggal dan hari dihitung dari <span class="font-[600] text-ink">catatan kegiatan</span>, bukan diisi di sini.</span>
+  </div>
 </div>
 
-<form method="post" novalidate class="mt-6 max-w-[980px]">
+<nav aria-label="Bagian formulir" id="rail" class="mt-6 hidden items-center gap-3 md:flex">
+  <a href="#bagian-1" class="rail-aktif flex items-center gap-2.5"><span class="rail-num">1</span><span class="rail-label">Informasi utama</span></a>
+  <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
+  <a href="#bagian-2" class="flex items-center gap-2.5"><span class="rail-num">2</span><span class="rail-label">Dokumen kontrak</span></a>
+  <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
+  <a href="#bagian-3" class="flex items-center gap-2.5"><span class="rail-num">3</span><span class="rail-label">Waktu kontrak</span></a>
+  <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
+  <a href="#bagian-4" class="flex items-center gap-2.5"><span class="rail-num">4</span><span class="rail-label">Demurrage &amp; tujuan</span></a>
+  <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
+  <a href="#bagian-5" class="flex items-center gap-2.5"><span class="rail-num">5</span><span class="rail-label">Muatan</span></a>
+  <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
+  <a href="#bagian-6" class="flex items-center gap-2.5"><span class="rail-num">6</span><span class="rail-label">Catatan</span></a>
+</nav>
+
+<form method="post" novalidate class="mt-5">
   {% csrf_token %}
   {% for e in form.non_field_errors %}<p class="mb-3 rounded-lg bg-bad-bg px-4 py-3 text-[14px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
 
-  <section class="card animate-rise p-5">
-    <h2 class="flex items-center gap-2 text-[16px] font-[650]"><svg class="h-[18px] w-[18px] shrink-0 text-action" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></svg>1 · Kapal &amp; identitas</h2>
-    <p class="mt-0.5 text-[13px] text-ink-soft">Kode voyage terisi otomatis dari voyage terakhir kapal — boleh diubah.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div data-quickadd>
-        <div class="mb-1.5 flex items-baseline justify-between gap-2">
-          <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.vessel.id_for_label }}">{{ form.vessel.label }}</label>
-          <button type="button" class="text-[13px] font-[550] text-action hover:underline"
-                  hx-get="{% url 'master_create' 'kapal' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Kapal baru</button>
-        </div>
-        {{ form.vessel }}
-        {% for e in form.vessel.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-        <div class="quickadd-slot"></div>
-      </div>
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
-        {{ form.code }}
-        {% for e in form.code.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-      </div>
-      <div data-quickadd>
-        <div class="mb-1.5 flex items-baseline justify-between gap-2">
-          <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.charterer.id_for_label }}">{{ form.charterer.label }}</label>
-          <button type="button" class="text-[13px] font-[550] text-action hover:underline"
-                  hx-get="{% url 'master_create' 'pencharter' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Pencharter baru</button>
-        </div>
-        {{ form.charterer }}
-        {% for e in form.charterer.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-        <div class="quickadd-slot"></div>
-      </div>
-    </div>
-  </section>
+  <div class="grid items-start gap-4 xl:grid-cols-2">
 
-  <section class="card mt-4 animate-rise p-5" style="animation-delay: 60ms">
-    <h2 class="flex items-center gap-2 text-[16px] font-[650]"><svg class="h-[18px] w-[18px] shrink-0 text-action" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>2 · Dokumen kontrak</h2>
-    <p class="mt-0.5 text-[13px] text-ink-soft">Salin persis dari kontrak dan kwitansinya.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.contract_no.id_for_label }}">{{ form.contract_no.label }}</label>
-        {{ form.contract_no }}
-        {% for e in form.contract_no.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-      </div>
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.invoice_no.id_for_label }}">{{ form.invoice_no.label }}</label>
-        {{ form.invoice_no }}
-        {% for e in form.invoice_no.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="card mt-4 animate-rise p-5" style="animation-delay: 120ms">
-    <h2 class="flex items-center gap-2 text-[16px] font-[650]"><svg class="h-[18px] w-[18px] shrink-0 text-action" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>3 · Waktu kontrak (prorata)</h2>
-    <p class="mt-0.5 text-[13px] text-ink-soft">Isi <span class="font-[600] text-ink">total saja</span> (kontrak 2026), <span class="font-[600] text-ink">atau muat + bongkar keduanya</span> (kontrak 2025) — total dihitung sendiri.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_days.id_for_label }}">{{ form.laytime_days.label }}</label>
-        {{ form.laytime_days }}
-        {% for e in form.laytime_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-      </div>
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_load_days.id_for_label }}">{{ form.laytime_load_days.label }}</label>
-        {{ form.laytime_load_days }}
-        {% for e in form.laytime_load_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-      </div>
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_discharge_days.id_for_label }}">{{ form.laytime_discharge_days.label }}</label>
-        {{ form.laytime_discharge_days }}
-        {% for e in form.laytime_discharge_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="card mt-4 animate-rise p-5" style="animation-delay: 180ms">
-    <h2 class="flex items-center gap-2 text-[16px] font-[650]"><svg class="h-[18px] w-[18px] shrink-0 text-action" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>4 · Demurrage &amp; tujuan</h2>
-    <p class="mt-0.5 text-[13px] text-ink-soft">Tarif per hari dari kontrak — kosongkan bila kontrak menulis “-”. Jetty muat diisi di bagian Muatan di bawah.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.demurrage_rate_idr.id_for_label }}">{{ form.demurrage_rate_idr.label }}</label>
-        {{ form.demurrage_rate_idr }}
-        {% for e in form.demurrage_rate_idr.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-      </div>
-      <div data-quickadd>
-        <div class="mb-1.5 flex items-baseline justify-between gap-2">
-          <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.discharge_jetty.id_for_label }}">{{ form.discharge_jetty.label }}</label>
-          <button type="button" class="text-[13px] font-[550] text-action hover:underline"
-                  hx-get="{% url 'master_create' 'jetty' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Jetty baru</button>
-        </div>
-        {{ form.discharge_jetty }}
-        {% for e in form.discharge_jetty.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-        <div class="quickadd-slot"></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card mt-4 animate-rise p-5" style="animation-delay: 240ms">
-    <h2 class="flex items-center gap-2 text-[16px] font-[650]"><svg class="h-[18px] w-[18px] shrink-0 text-action" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>5 · Muatan</h2>
-    <p class="mt-0.5 text-[13px] text-ink-soft">Satu baris per muatan — jetty muat diisi di sini (rute voyage dihitung dari jetty ini). Baris kosong diabaikan.</p>
-    {{ formset.management_form }}
-    {% for e in formset.non_form_errors %}<p class="mt-2 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-    {% for pform in formset %}
-      <div class="mt-4 rounded-lg border border-line-soft bg-[#f8fafc] p-4">
-        <p class="text-[12.5px] font-[650] uppercase tracking-wider text-ink-faint">Muatan {{ forloop.counter }}</p>
-        {% for hidden in pform.hidden_fields %}{{ hidden }}{% endfor %}
-        <div class="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {% for field in pform.visible_fields %}
-            <div {% if field.name == 'DELETE' %}class="flex items-end gap-2 pb-2"{% elif field.name == 'load_jetty' %}data-quickadd{% endif %}>
-              {% if field.name == 'DELETE' %}
-                {{ field }}
-                <label class="text-[13.5px] font-[550] text-bad-ink" for="{{ field.id_for_label }}">Hapus baris ini</label>
-              {% elif field.name == 'load_jetty' %}
-                <div class="mb-1.5 flex items-baseline justify-between gap-2">
-                  <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                  <button type="button" class="text-[13px] font-[550] text-action hover:underline"
-                          hx-get="{% url 'master_create' 'jetty' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Jetty baru</button>
-                </div>
-                {{ field }}
-                <div class="quickadd-slot"></div>
-              {% else %}
-                <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-              {% endif %}
-              {% for e in field.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-            </div>
-          {% endfor %}
+    <section id="bagian-1" class="card animate-rise scroll-mt-6 p-5">
+      <div class="flex items-start gap-3">
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-info-bg text-[13px] font-[700] text-info-ink">1</span>
+        <div>
+          <h2 class="text-[16px] font-[650]">Kapal &amp; identitas</h2>
+          <p class="mt-0.5 text-[13px] text-ink-soft">Kode voyage terisi otomatis dari voyage terakhir kapal — boleh diubah.</p>
         </div>
       </div>
-    {% endfor %}
-  </section>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <div data-quickadd>
+          <div class="mb-1.5 flex items-baseline justify-between gap-2">
+            <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.vessel.id_for_label }}">{{ form.vessel.label }}</label>
+            <button type="button" class="text-[13px] font-[550] text-action hover:underline"
+                    hx-get="{% url 'master_create' 'kapal' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Kapal baru</button>
+          </div>
+          {{ form.vessel }}
+          {% for e in form.vessel.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+          <div class="quickadd-slot"></div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+          {{ form.code }}
+          {% for e in form.code.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="sm:col-span-2" data-quickadd>
+          <div class="mb-1.5 flex items-baseline justify-between gap-2">
+            <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.charterer.id_for_label }}">{{ form.charterer.label }}</label>
+            <button type="button" class="text-[13px] font-[550] text-action hover:underline"
+                    hx-get="{% url 'master_create' 'pencharter' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Pencharter baru</button>
+          </div>
+          {{ form.charterer }}
+          {% for e in form.charterer.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+          <div class="quickadd-slot"></div>
+        </div>
+      </div>
+    </section>
 
-  <section class="card mt-4 animate-rise p-5" style="animation-delay: 300ms">
-    <h2 class="flex items-center gap-2 text-[16px] font-[650]"><svg class="h-[18px] w-[18px] shrink-0 text-action" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>6 · Catatan</h2>
-    <div class="mt-3">
-      <label class="sr-only" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
-      {{ form.notes }}
-      {% for e in form.notes.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-    </div>
-  </section>
+    <section id="bagian-2" class="card animate-rise scroll-mt-6 p-5" style="animation-delay: 60ms">
+      <div class="flex items-start gap-3">
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-info-bg text-[13px] font-[700] text-info-ink">2</span>
+        <div>
+          <h2 class="text-[16px] font-[650]">Dokumen kontrak</h2>
+          <p class="mt-0.5 text-[13px] text-ink-soft">Salin persis dari kontrak dan kwitansinya.</p>
+        </div>
+      </div>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.contract_no.id_for_label }}">{{ form.contract_no.label }}</label>
+          {{ form.contract_no }}
+          {% for e in form.contract_no.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.invoice_no.id_for_label }}">{{ form.invoice_no.label }}</label>
+          {{ form.invoice_no }}
+          {% for e in form.invoice_no.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </div>
+      </div>
+    </section>
 
-  <div class="mt-5 flex items-center gap-2.5">
-    <button type="submit" class="btn btn-primary">Simpan voyage</button>
+    <section id="bagian-3" class="card animate-rise scroll-mt-6 p-5" style="animation-delay: 120ms">
+      <div class="flex items-start gap-3">
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-info-bg text-[13px] font-[700] text-info-ink">3</span>
+        <div>
+          <h2 class="text-[16px] font-[650]">Waktu kontrak (prorata)</h2>
+          <p class="mt-0.5 text-[13px] text-ink-soft">Isi <span class="font-[600] text-ink">total saja</span> (kontrak 2026), <span class="font-[600] text-ink">atau muat + bongkar keduanya</span> (kontrak 2025) — total dihitung sendiri.</p>
+        </div>
+      </div>
+      <div class="mt-4 grid gap-4 sm:grid-cols-3">
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_days.id_for_label }}">{{ form.laytime_days.label }}</label>
+          {{ form.laytime_days }}
+          {% for e in form.laytime_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_load_days.id_for_label }}">{{ form.laytime_load_days.label }}</label>
+          {{ form.laytime_load_days }}
+          {% for e in form.laytime_load_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.laytime_discharge_days.id_for_label }}">{{ form.laytime_discharge_days.label }}</label>
+          {{ form.laytime_discharge_days }}
+          {% for e in form.laytime_discharge_days.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section id="bagian-4" class="card animate-rise scroll-mt-6 p-5" style="animation-delay: 180ms">
+      <div class="flex items-start gap-3">
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-info-bg text-[13px] font-[700] text-info-ink">4</span>
+        <div>
+          <h2 class="text-[16px] font-[650]">Demurrage &amp; tujuan</h2>
+          <p class="mt-0.5 text-[13px] text-ink-soft">Tarif per hari dari kontrak — kosongkan bila kontrak menulis “-”.</p>
+        </div>
+      </div>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.demurrage_rate_idr.id_for_label }}">{{ form.demurrage_rate_idr.label }}</label>
+          {{ form.demurrage_rate_idr }}
+          {% for e in form.demurrage_rate_idr.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </div>
+        <div data-quickadd>
+          <div class="mb-1.5 flex items-baseline justify-between gap-2">
+            <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.discharge_jetty.id_for_label }}">{{ form.discharge_jetty.label }}</label>
+            <button type="button" class="text-[13px] font-[550] text-action hover:underline"
+                    hx-get="{% url 'master_create' 'jetty' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Jetty baru</button>
+          </div>
+          {{ form.discharge_jetty }}
+          {% for e in form.discharge_jetty.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+          <div class="quickadd-slot"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="bagian-5" class="card animate-rise scroll-mt-6 p-5 xl:col-span-2" style="animation-delay: 240ms">
+      <div class="flex items-start gap-3">
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-info-bg text-[13px] font-[700] text-info-ink">5</span>
+        <div>
+          <h2 class="text-[16px] font-[650]">Muatan</h2>
+          <p class="mt-0.5 text-[13px] text-ink-soft">Satu baris per muatan — jetty muat diisi di sini (rute voyage dihitung dari jetty ini). Baris kosong diabaikan.</p>
+        </div>
+      </div>
+      {{ formset.management_form }}
+      {% for e in formset.non_form_errors %}<p class="mt-2 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+      <div id="muatan-wadah">
+        {% for pform in formset %}
+          {% include "voyages/_muatan_row.html" with pform=pform nomor=forloop.counter %}
+        {% endfor %}
+      </div>
+      <template id="muatan-template">{% include "voyages/_muatan_row.html" with pform=formset.empty_form nomor="" %}</template>
+      <button type="button" id="muatan-tambah"
+              class="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-line py-2.5 text-[14px] font-[550] text-action transition-colors hover:border-action hover:bg-action-tint">
+        + Tambah muatan lain
+      </button>
+    </section>
+
+    <section id="bagian-6" class="card animate-rise scroll-mt-6 p-5 xl:col-span-2" style="animation-delay: 300ms">
+      <div class="grid gap-4 md:grid-cols-[260px_1fr]">
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-info-bg text-[13px] font-[700] text-info-ink">6</span>
+          <div>
+            <h2 class="text-[16px] font-[650]">Catatan</h2>
+            <p class="mt-0.5 text-[13px] text-ink-soft">Catatan tambahan terkait voyage (opsional).</p>
+          </div>
+        </div>
+        <div>
+          <label class="sr-only" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+          {{ form.notes }}
+          {% for e in form.notes.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="mt-5 flex items-center justify-between gap-2.5">
     <a class="btn btn-secondary" href="{% if voyage %}{% url 'voyage_detail' voyage.pk %}{% else %}{% url 'rekap' %}{% endif %}">Batal</a>
+    <button type="submit" class="btn btn-primary">Simpan voyage</button>
   </div>
 </form>
 
@@ -178,6 +218,57 @@
       var lokal = wadah && wadah.querySelector('select');
       if (lokal) lokal.value = baru.dataset.baruValue;
     });
+  })();
+
+  // Muatan rows: clone the empty-form template on "+ Tambah muatan lain";
+  // "Hapus" clears + hides the row (and checks DELETE for saved rows).
+  (function () {
+    var total = document.querySelector('input[name="parcels-TOTAL_FORMS"]');
+    var wadah = document.getElementById('muatan-wadah');
+    var tpl = document.getElementById('muatan-template');
+    document.getElementById('muatan-tambah').addEventListener('click', function () {
+      var idx = parseInt(total.value, 10);
+      var kotak = document.createElement('div');
+      kotak.innerHTML = tpl.innerHTML.replace(/__prefix__/g, idx);
+      var baris = kotak.firstElementChild;
+      wadah.appendChild(baris);
+      total.value = idx + 1;
+      penomoran();
+      if (window.htmx) htmx.process(baris);
+      var pertama = baris.querySelector('input, select');
+      if (pertama) pertama.focus();
+    });
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('.muatan-hapus');
+      if (!b) return;
+      var baris = b.closest('.muatan-baris');
+      var del = baris.querySelector('input[name$="-DELETE"]');
+      if (del) del.checked = true;
+      baris.querySelectorAll('input:not([type=hidden]):not([type=checkbox]), select, textarea').forEach(function (i) { i.value = ''; });
+      baris.classList.add('hidden');
+      penomoran();
+    });
+    function penomoran() {
+      var n = 0;
+      wadah.querySelectorAll('.muatan-baris:not(.hidden) .muatan-nomor').forEach(function (el) {
+        el.textContent = ++n;
+      });
+    }
+  })();
+
+  // Section rail: highlight the section currently in view.
+  (function () {
+    var rail = document.getElementById('rail');
+    if (!rail || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        rail.querySelectorAll('a').forEach(function (a) {
+          a.classList.toggle('rail-aktif', a.hash === '#' + en.target.id);
+        });
+      });
+    }, { rootMargin: '-15% 0px -65% 0px' });
+    document.querySelectorAll('section[id^="bagian-"]').forEach(function (s) { io.observe(s); });
   })();
 </script>
 {% endblock %}

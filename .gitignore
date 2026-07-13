@@ -20,11 +20,14 @@ db.sqlite3
 Thumbs.db
 .DS_Store
 
-# Source data & photos stay local — never in git (real business documents)
+# Source data & photos stay local — never in git (real business documents,
+# UI references, and downloaded stock previews). App assets live in
+# voyages/static/ — root-level images are always local references.
 *.xlsx
 *.jpeg
 *.jpg
 prototype.html
+/*.png
 /inspo.png
 /Logo-Ori.png
 

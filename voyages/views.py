@@ -511,11 +511,7 @@ def armada(request):
     }
     if f["cari"]:
         q = f["cari"].lower()
-        fleet = [
-            c for c in fleet
-            if q in c["vessel"].name.lower()
-            or any(q in r["voyage"].code.lower() for r in c["last3"])
-        ]
+        fleet = [c for c in fleet if q in c["vessel"].name.lower()]
     if f["status"]:
         fleet = [c for c in fleet if _card_status(c) == f["status"]]
     if f["urut"] == "voyage":

@@ -16,20 +16,30 @@
     <h2 class="flex items-center gap-2 text-[16px] font-[650]"><svg class="h-[18px] w-[18px] shrink-0 text-action" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></svg>1 · Kapal &amp; identitas</h2>
     <p class="mt-0.5 text-[13px] text-ink-soft">Kode voyage terisi otomatis dari voyage terakhir kapal — boleh diubah.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.vessel.id_for_label }}">{{ form.vessel.label }}</label>
+      <div data-quickadd>
+        <div class="mb-1.5 flex items-baseline justify-between gap-2">
+          <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.vessel.id_for_label }}">{{ form.vessel.label }}</label>
+          <button type="button" class="text-[13px] font-[550] text-action hover:underline"
+                  hx-get="{% url 'master_create' 'kapal' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Kapal baru</button>
+        </div>
         {{ form.vessel }}
         {% for e in form.vessel.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        <div class="quickadd-slot"></div>
       </div>
       <div>
         <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
         {{ form.code }}
         {% for e in form.code.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
       </div>
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.charterer.id_for_label }}">{{ form.charterer.label }}</label>
+      <div data-quickadd>
+        <div class="mb-1.5 flex items-baseline justify-between gap-2">
+          <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.charterer.id_for_label }}">{{ form.charterer.label }}</label>
+          <button type="button" class="text-[13px] font-[550] text-action hover:underline"
+                  hx-get="{% url 'master_create' 'pencharter' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Pencharter baru</button>
+        </div>
         {{ form.charterer }}
         {% for e in form.charterer.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        <div class="quickadd-slot"></div>
       </div>
     </div>
   </section>
@@ -82,10 +92,15 @@
         {{ form.demurrage_rate_idr }}
         {% for e in form.demurrage_rate_idr.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
       </div>
-      <div>
-        <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.discharge_jetty.id_for_label }}">{{ form.discharge_jetty.label }}</label>
+      <div data-quickadd>
+        <div class="mb-1.5 flex items-baseline justify-between gap-2">
+          <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ form.discharge_jetty.id_for_label }}">{{ form.discharge_jetty.label }}</label>
+          <button type="button" class="text-[13px] font-[550] text-action hover:underline"
+                  hx-get="{% url 'master_create' 'jetty' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Jetty baru</button>
+        </div>
         {{ form.discharge_jetty }}
         {% for e in form.discharge_jetty.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        <div class="quickadd-slot"></div>
       </div>
     </div>
   </section>
@@ -101,10 +116,18 @@
         {% for hidden in pform.hidden_fields %}{{ hidden }}{% endfor %}
         <div class="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {% for field in pform.visible_fields %}
-            <div {% if field.name == 'DELETE' %}class="flex items-end gap-2 pb-2"{% endif %}>
+            <div {% if field.name == 'DELETE' %}class="flex items-end gap-2 pb-2"{% elif field.name == 'load_jetty' %}data-quickadd{% endif %}>
               {% if field.name == 'DELETE' %}
                 {{ field }}
                 <label class="text-[13.5px] font-[550] text-bad-ink" for="{{ field.id_for_label }}">Hapus baris ini</label>
+              {% elif field.name == 'load_jetty' %}
+                <div class="mb-1.5 flex items-baseline justify-between gap-2">
+                  <label class="block text-[13.5px] font-[550] text-ink-soft" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  <button type="button" class="text-[13px] font-[550] text-action hover:underline"
+                          hx-get="{% url 'master_create' 'jetty' %}?inline=1" hx-target="next .quickadd-slot" hx-swap="innerHTML">+ Jetty baru</button>
+                </div>
+                {{ field }}
+                <div class="quickadd-slot"></div>
               {% else %}
                 <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
@@ -131,4 +154,30 @@
     <a class="btn btn-secondary" href="{% if voyage %}{% url 'voyage_detail' voyage.pk %}{% else %}{% url 'rekap' %}{% endif %}">Batal</a>
   </div>
 </form>
+
+<script>
+  // Quick-add: when a master_added fragment lands in a slot, put the new entry
+  // into every matching dropdown and select it where the user was working.
+  (function () {
+    var peta = {
+      kapal: ['select[name="vessel"]'],
+      pencharter: ['select[name="charterer"]'],
+      jetty: ['select[name="discharge_jetty"]', 'select[name$="load_jetty"]'],
+    };
+    document.body.addEventListener('htmx:afterSwap', function (e) {
+      var baru = e.target.querySelector && e.target.querySelector('[data-baru-kind]');
+      if (!baru) return;
+      var selects = peta[baru.dataset.baruKind] || [];
+      document.querySelectorAll(selects.join(',')).forEach(function (s) {
+        var ada = Array.prototype.some.call(s.options, function (o) {
+          return o.value === baru.dataset.baruValue;
+        });
+        if (!ada) s.add(new Option(baru.dataset.baruLabel, baru.dataset.baruValue));
+      });
+      var wadah = baru.closest('[data-quickadd]');
+      var lokal = wadah && wadah.querySelector('select');
+      if (lokal) lokal.value = baru.dataset.baruValue;
+    });
+  })();
+</script>
 {% endblock %}

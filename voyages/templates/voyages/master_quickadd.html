@@ -1,0 +1,33 @@
+{# Quick-add panel swapped into a .quickadd-slot on the voyage form (htmx). #}
+{# No <form> tag — it would nest inside the voyage form; hx-include gathers the inputs. #}
+<div class="quickadd-panel mt-2 animate-rise rounded-lg border border-line bg-white p-4 shadow-card">
+  <p class="text-[14px] font-[650]">Tambah {{ label|lower }} baru</p>
+  {% csrf_token %}
+  {% for e in form.non_field_errors %}<p class="mt-2 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+  <div class="mt-3 space-y-3">
+    {% for field in form.visible_fields %}
+      {% if field.field.widget.input_type == "checkbox" %}
+      <div class="flex items-center gap-2">
+        {{ field }}
+        <label class="text-[13.5px] font-[550]" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      </div>
+      {% else %}
+      <div>
+        <label class="mb-1 block text-[13px] font-[550] text-ink-soft" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="mt-1 text-[12.5px] text-ink-faint">{{ field.help_text }}</p>{% endif %}
+      </div>
+      {% endif %}
+      {% for e in field.errors %}<p class="mt-1 text-[13px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+    {% endfor %}
+  </div>
+  <div class="mt-3.5 flex items-center gap-2">
+    <button type="button" class="btn btn-primary"
+            hx-post="{% url 'master_create' jenis %}?inline=1"
+            hx-include="closest .quickadd-panel"
+            hx-target="closest .quickadd-slot"
+            hx-swap="innerHTML">Simpan {{ label|lower }}</button>
+    <button type="button" class="btn btn-secondary"
+            onclick="this.closest('.quickadd-slot').innerHTML=''">Batal</button>
+  </div>
+</div>

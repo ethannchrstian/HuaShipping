@@ -13,6 +13,7 @@ urlpatterns = [
     path('voyage/<int:pk>/selesaikan/', views.voyage_complete, name='voyage_complete'),
     path('voyage/<int:pk>/buka-kunci/', views.voyage_unlock, name='voyage_unlock'),
     path('voyage/<int:pk>/hapus/', views.voyage_delete, name='voyage_delete'),
+    path('armada/', views.armada, name='armada'),
     path('data/', views.data_master, name='data_master'),
     path('data/<str:jenis>/baru/', views.master_edit, name='master_create'),
     path('data/<str:jenis>/<int:pk>/ubah/', views.master_edit, name='master_edit'),

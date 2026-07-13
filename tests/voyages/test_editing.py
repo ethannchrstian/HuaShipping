@@ -288,3 +288,46 @@ class TestDataMaster:
     def test_unknown_jenis_bounces_back(self, admin, db):
         response = admin.get("/data/lorem/baru/")
         assert response.status_code == 302 and response.url == "/data/"
+
+
+class TestQuickAdd:
+    """Inline master quick-add embedded in the voyage form (htmx fragments)."""
+
+    def test_inline_panel_uses_prefixed_fields_and_no_nested_form(self, admin, db):
+        html = admin.get("/data/pencharter/baru/?inline=1").content.decode()
+        # "baru-" prefix keeps pencharter's "code" from colliding with the
+        # voyage form's own "code" field; a <form> tag would nest illegally
+        assert 'name="baru-code"' in html and "Simpan pencharter" in html
+        assert "<form" not in html
+
+    def test_inline_post_creates_and_returns_marker(self, admin, db):
+        response = admin.post(
+            "/data/jetty/baru/?inline=1", {"baru-name": "Jetty Quick", "baru-port": "Dumai"}
+        )
+        j = Jetty.objects.get(name="Jetty Quick")
+        html = response.content.decode()
+        assert f'data-baru-value="{j.pk}"' in html and 'data-baru-kind="jetty"' in html
+
+    def test_inline_post_invalid_rerenders_panel(self, admin, data):
+        taken = Jetty.objects.first().name
+        response = admin.post("/data/jetty/baru/?inline=1", {"baru-name": taken, "baru-port": ""})
+        html = response.content.decode()
+        assert "data-baru-value" not in html and 'name="baru-name"' in html
+
+    def test_voyage_form_offers_quickadd_everywhere(self, admin, data):
+        html = admin.get("/voyage/baru/").content.decode()
+        # kapal + pencharter + jetty bongkar + one per muatan row (2 extra rows)
+        assert html.count("?inline=1") >= 5
+
+
+class TestArmada:
+    def test_lists_every_vessel_with_status_and_history(self, admin, data):
+        html = admin.get("/armada/").content.decode()
+        assert "TB. HUA Navigator 1" in html and "TB. HUA Navigator 2" in html
+        assert "V2501" in html  # history reaches back across years
+        assert "sedang" in html  # ongoing vessel shows what it is doing now
+
+    def test_vessel_without_voyages_still_shown(self, admin, db):
+        Vessel.objects.create(name="TB Uji & BG Uji", tug_name="TB Uji", barge_name="BG Uji")
+        html = admin.get("/armada/").content.decode()
+        assert "TB Uji" in html and "Belum ada voyage untuk kapal ini." in html

@@ -7,6 +7,7 @@ domain/ package (ADR-002: computed on read, never stored).
 from __future__ import annotations
 
 from datetime import timedelta
+from decimal import Decimal
 
 from django.utils import timezone
 
@@ -466,6 +467,53 @@ def voyage_year(v: Voyage) -> int | None:
     if len(v.code) >= 3 and v.code[1:3].isdigit():
         return 2000 + int(v.code[1:3])
     return None
+
+
+def fleet_cards(vessels) -> list[dict]:
+    """Armada page: per vessel — what it is doing right now, this-year totals,
+    and its full voyage history (all recomputed from the activity log)."""
+    year = timezone.localtime().year
+    cards = []
+    for vessel in vessels:
+        voyages = list(
+            vessel.voyages.prefetch_related("activities__activity_type", "parcels__load_jetty")
+        )
+        ongoing = next((v for v in voyages if v.status == Voyage.Status.ONGOING), None)
+        doing = None
+        if ongoing:
+            last = ongoing.activities.select_related("activity_type").last()
+            if last is None:
+                doing = "belum ada kegiatan tercatat"
+            elif last.activity_type.is_sailing and last.to_location:
+                doing = f"sedang {last.activity_type.label_id} menuju {last.to_location}"
+            else:
+                doing = f"sedang {last.activity_type.label_id}"
+        n = port_days = dem = 0
+        mt = Decimal(0)
+        for v in voyages:
+            if voyage_year(v) != year:
+                continue
+            n += 1
+            port = total_port_time(v.domain_activities())
+            port_days += port.days if port else 0
+            laytime = int(v.laytime_days) if v.laytime_days is not None else None
+            if v.demurrage_rate_idr:
+                dem += demurrage_days(port, laytime) or 0
+            mt += sum((p.quantity_mt for p in v.parcels.all()), Decimal(0))
+        cards.append(
+            {
+                "vessel": vessel,
+                "ongoing": ongoing,
+                "doing": doing,
+                "rows": list_rows(sorted(voyages, key=lambda v: v.code, reverse=True)),
+                "year": year,
+                "n_voyages": n,
+                "mt": num_id(int(mt)),
+                "port_days": port_days,
+                "dem_days": dem,
+            }
+        )
+    return cards
 
 
 def kpis(voyages, year: int) -> dict:

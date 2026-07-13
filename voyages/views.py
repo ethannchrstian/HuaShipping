@@ -459,18 +459,35 @@ def master_edit(request, jenis, pk=None):
         return redirect("data_master")
     model, form_class, label = MASTER[jenis]
     obj = get_object_or_404(model, pk=pk) if pk else None
+    # inline = quick-add panel embedded in the voyage form (htmx fragment);
+    # fields get a "baru-" prefix so they never collide with the outer form's.
+    inline = "inline" in request.GET
+    prefix = "baru" if inline else None
     if request.method == "POST":
-        form = form_class(request.POST, instance=obj)
+        form = form_class(request.POST, instance=obj, prefix=prefix)
         if form.is_valid():
             saved = form.save()
+            if inline:
+                return render(
+                    request,
+                    "voyages/master_added.html",
+                    {"obj": saved, "label": label, "jenis": jenis},
+                )
             verb = "diubah" if obj else "ditambahkan"
             messages.success(request, f"{label} “{saved}” {verb}.")
             return redirect("data_master")
     else:
-        form = form_class(instance=obj)
+        form = form_class(instance=obj, prefix=prefix)
     title = f"Ubah {label.lower()}" if obj else f"Tambah {label.lower()}"
+    template = "voyages/master_quickadd.html" if inline else "voyages/master_form.html"
     return render(
         request,
-        "voyages/master_form.html",
-        {"form": form, "title": title, "label": label, "obj": obj},
+        template,
+        {"form": form, "title": title, "label": label, "obj": obj, "jenis": jenis},
     )
+
+
+@login_required
+def armada(request):
+    vessels = Vessel.objects.order_by("-active", "name")
+    return render(request, "voyages/armada.html", {"fleet": presenters.fleet_cards(vessels)})

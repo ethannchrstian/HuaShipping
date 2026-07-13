@@ -268,7 +268,8 @@
     opacity: 0;
     animation: splash-name 0.5s ease 0.55s forwards;
   }
-  /* Voyage form: numbered section rail (jump links + scroll highlight) */
+  /* Voyage form: numbered rail = completion checklist (check appears when
+     the section's data is filled; the number is a jump link either way) */
   .rail-num {
     display: flex;
     width: 26px;
@@ -284,8 +285,10 @@
     transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
   }
   .rail-label { font-size: 13px; font-weight: 550; color: var(--color-ink-soft); white-space: nowrap; }
-  .rail-aktif .rail-num { border-color: var(--color-action); background: var(--color-action); color: #fff; }
-  .rail-aktif .rail-label { color: var(--color-action); font-weight: 650; }
+  .rail-selesai .rail-num { border-color: var(--color-ok-ink); background: var(--color-ok-ink); color: #fff; }
+  .rail-selesai .rail-num .rail-angka { display: none; }
+  .rail-selesai .rail-num::after { content: "✓"; }
+  .rail-selesai .rail-label { color: var(--color-ink); font-weight: 650; }
 
   @keyframes splash-pop  { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   @keyframes splash-fill { to { clip-path: inset(0 0 0 0); } }

@@ -15,25 +15,25 @@
   </div>
 </div>
 
-<nav aria-label="Bagian formulir" id="rail" class="mt-6 hidden items-center gap-3 md:flex">
-  <a href="#bagian-1" class="rail-aktif flex items-center gap-2.5"><span class="rail-num">1</span><span class="rail-label">Informasi utama</span></a>
+<nav aria-label="Kelengkapan formulir" id="rail" class="mt-6 hidden items-center gap-3 md:flex">
+  <a href="#bagian-1" class="flex items-center gap-2.5"><span class="rail-num"><span class="rail-angka">1</span></span><span class="rail-label">Informasi utama</span></a>
   <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-  <a href="#bagian-2" class="flex items-center gap-2.5"><span class="rail-num">2</span><span class="rail-label">Dokumen kontrak</span></a>
+  <a href="#bagian-2" class="flex items-center gap-2.5"><span class="rail-num"><span class="rail-angka">2</span></span><span class="rail-label">Dokumen kontrak</span></a>
   <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-  <a href="#bagian-3" class="flex items-center gap-2.5"><span class="rail-num">3</span><span class="rail-label">Waktu kontrak</span></a>
+  <a href="#bagian-3" class="flex items-center gap-2.5"><span class="rail-num"><span class="rail-angka">3</span></span><span class="rail-label">Waktu kontrak</span></a>
   <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-  <a href="#bagian-4" class="flex items-center gap-2.5"><span class="rail-num">4</span><span class="rail-label">Demurrage &amp; tujuan</span></a>
+  <a href="#bagian-4" class="flex items-center gap-2.5"><span class="rail-num"><span class="rail-angka">4</span></span><span class="rail-label">Demurrage &amp; tujuan</span></a>
   <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-  <a href="#bagian-5" class="flex items-center gap-2.5"><span class="rail-num">5</span><span class="rail-label">Muatan</span></a>
+  <a href="#bagian-5" class="flex items-center gap-2.5"><span class="rail-num"><span class="rail-angka">5</span></span><span class="rail-label">Muatan</span></a>
   <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
-  <a href="#bagian-6" class="flex items-center gap-2.5"><span class="rail-num">6</span><span class="rail-label">Catatan</span></a>
+  <a href="#bagian-6" class="flex items-center gap-2.5"><span class="rail-num"><span class="rail-angka">6</span></span><span class="rail-label">Catatan</span></a>
 </nav>
 
 <form method="post" novalidate class="mt-5">
   {% csrf_token %}
   {% for e in form.non_field_errors %}<p class="mb-3 rounded-lg bg-bad-bg px-4 py-3 text-[14px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
 
-  <div class="grid items-start gap-4 xl:grid-cols-2">
+  <div class="grid gap-4 xl:grid-cols-2">
 
     <section id="bagian-1" class="card animate-rise scroll-mt-6 p-5">
       <div class="flex items-start gap-3">
@@ -256,19 +256,41 @@
     }
   })();
 
-  // Section rail: highlight the section currently in view.
+  // Section rail = completion checklist: a step gets a check the moment its
+  // data is actually filled in (numbers stay clickable jump links).
   (function () {
     var rail = document.getElementById('rail');
-    if (!rail || !('IntersectionObserver' in window)) return;
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (!en.isIntersecting) return;
-        rail.querySelectorAll('a').forEach(function (a) {
-          a.classList.toggle('rail-aktif', a.hash === '#' + en.target.id);
+    if (!rail) return;
+    function terisi(sel) {
+      var el = document.querySelector(sel);
+      return !!el && el.value.trim() !== '';
+    }
+    var aturan = {
+      'bagian-1': function () { return terisi('select[name="vessel"]') && terisi('input[name="code"]'); },
+      'bagian-2': function () { return terisi('input[name="contract_no"]'); },
+      'bagian-3': function () {
+        return terisi('input[name="laytime_days"]') ||
+          (terisi('input[name="laytime_load_days"]') && terisi('input[name="laytime_discharge_days"]'));
+      },
+      'bagian-4': function () { return terisi('input[name="demurrage_rate_idr"]') || terisi('select[name="discharge_jetty"]'); },
+      'bagian-5': function () {
+        return Array.prototype.some.call(document.querySelectorAll('.muatan-baris:not(.hidden)'), function (b) {
+          var q = b.querySelector('input[name$="-quantity_mt"]');
+          var j = b.querySelector('select[name$="-load_jetty"]');
+          return q && q.value.trim() !== '' && j && j.value !== '';
         });
+      },
+      'bagian-6': function () { return terisi('textarea[name="notes"]'); },
+    };
+    function segarkan() {
+      rail.querySelectorAll('a').forEach(function (a) {
+        var id = a.hash.slice(1);
+        a.classList.toggle('rail-selesai', !!(aturan[id] && aturan[id]()));
       });
-    }, { rootMargin: '-15% 0px -65% 0px' });
-    document.querySelectorAll('section[id^="bagian-"]').forEach(function (s) { io.observe(s); });
+    }
+    document.addEventListener('input', segarkan);
+    document.addEventListener('change', segarkan);
+    segarkan();
   })();
 </script>
 {% endblock %}

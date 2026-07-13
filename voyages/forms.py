@@ -64,9 +64,16 @@ class VoyageForm(forms.ModelForm):
         widgets = {
             "contract_no": forms.TextInput(attrs={"placeholder": "Contoh: 010/HUAT-FPS/VII/2026"}),
             "invoice_no": forms.TextInput(attrs={"placeholder": "Contoh: 017/INV/HUAT-PNLF/VI/2026"}),
-            "laytime_days": forms.NumberInput(attrs={"placeholder": "Contoh: 12"}),
-            "laytime_load_days": forms.NumberInput(attrs={"placeholder": "Contoh: 6"}),
-            "laytime_discharge_days": forms.NumberInput(attrs={"placeholder": "Contoh: 6"}),
+            # hari are whole numbers on the sheets — spinner steps by 1, not 0.1
+            "laytime_days": forms.NumberInput(
+                attrs={"placeholder": "Contoh: 12", "step": "1", "min": "0"}
+            ),
+            "laytime_load_days": forms.NumberInput(
+                attrs={"placeholder": "Contoh: 6", "step": "1", "min": "0"}
+            ),
+            "laytime_discharge_days": forms.NumberInput(
+                attrs={"placeholder": "Contoh: 6", "step": "1", "min": "0"}
+            ),
             "demurrage_rate_idr": forms.NumberInput(attrs={"placeholder": "Contoh: 20000000"}),
             "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Tulis catatan di sini…"}),
         }

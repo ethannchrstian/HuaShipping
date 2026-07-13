@@ -487,10 +487,42 @@ def master_edit(request, jenis, pk=None):
     )
 
 
+def _card_status(card):
+    if not card["vessel"].active:
+        return "nonaktif"
+    return "berjalan" if card["ongoing"] else "siap"
+
+
 @login_required
 def armada(request):
     vessels = Vessel.objects.order_by("-active", "name")
-    return render(request, "voyages/armada.html", {"fleet": presenters.fleet_cards(vessels)})
+    fleet = presenters.fleet_cards(vessels)
+    kpis = {
+        "total": len(fleet),
+        "berjalan": sum(1 for c in fleet if _card_status(c) == "berjalan"),
+        "selesai": Voyage.objects.filter(status=Voyage.Status.COMPLETED).count(),
+        "muat": sum(1 for c in fleet if c["ongoing"] and c["now"].get("step") == 0),
+        "nonaktif": sum(1 for c in fleet if not c["vessel"].active),
+    }
+    f = {
+        "cari": (request.GET.get("cari") or "").strip(),
+        "status": request.GET.get("status") or "",
+        "urut": request.GET.get("urut") or "nama",
+    }
+    if f["cari"]:
+        q = f["cari"].lower()
+        fleet = [
+            c for c in fleet
+            if q in c["vessel"].name.lower()
+            or any(q in r["voyage"].code.lower() for r in c["last3"])
+        ]
+    if f["status"]:
+        fleet = [c for c in fleet if _card_status(c) == f["status"]]
+    if f["urut"] == "voyage":
+        fleet.sort(key=lambda c: c["n_voyages"], reverse=True)
+    return render(
+        request, "voyages/armada.html", {"fleet": fleet, "kpis": kpis, "filters": f}
+    )
 
 
 @login_required
@@ -507,11 +539,31 @@ def armada_riwayat(request, pk):
         year = current if current in years or not years else years[0]
     if years and year not in years:
         year = years[0] if current not in years else current
+    history = presenters.vessel_history(vessel, year)
+    rows = history["rows"]
+    routes = sorted({r["route"] for r in rows if r["route"] != "—"})
+    f = {
+        "status": request.GET.get("status") or "",
+        "rute": request.GET.get("rute") or "",
+        "cari": (request.GET.get("cari") or "").strip(),
+    }
+    if f["status"]:
+        rows = [r for r in rows if r["voyage"].status == f["status"]]
+    if f["rute"]:
+        rows = [r for r in rows if r["route"] == f["rute"]]
+    if f["cari"]:
+        q = f["cari"].lower()
+        rows = [r for r in rows if q in r["voyage"].code.lower() or q in r["route"].lower()]
     context = {
         "vessel": vessel,
         "year": year,
         "years": years,
         "cards": presenters.fleet_cards([vessel]),
-        **presenters.vessel_history(vessel, year),
+        "routes": routes,
+        "filters": f,
+        "statuses": Voyage.Status.choices,
+        **history,
+        "rows": rows,
+        "n_total": len(history["rows"]),
     }
     return render(request, "voyages/riwayat_kapal.html", context)

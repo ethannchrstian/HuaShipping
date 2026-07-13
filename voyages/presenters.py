@@ -507,6 +507,34 @@ def _year_totals(voyages, year: int) -> dict:
     return {"n_voyages": n, "mt": num_id(int(mt)), "port_days": port_days, "dem_days": dem}
 
 
+def _tracker(voyage) -> list[dict]:
+    """Muat→Berlayar→Bongkar steps with real dates from the activity log.
+    Ongoing: steps before the current phase are done; completed: all done."""
+    activities = list(voyage.activities.select_related("activity_type"))
+    last = activities[-1] if activities else None
+    if voyage.status != Voyage.Status.ONGOING:
+        cur = len(PHASE_STEPS)
+    elif last is not None:
+        cur = PHASE_TRACK.get(last.activity_type.phase, (0, 4))[0]
+    else:
+        cur = None
+    steps = []
+    for i, label in enumerate(PHASE_STEPS):
+        acts_i = [
+            a for a in activities
+            if PHASE_TRACK.get(a.activity_type.phase, (0, 0))[0] == i
+        ]
+        if cur is None or i > cur:
+            steps.append({"label": label, "state": "todo", "note": "Belum mulai", "date": None})
+        elif i < cur:
+            end = (acts_i[-1].end_at or acts_i[-1].start_at) if acts_i else None
+            steps.append({"label": label, "state": "done", "note": "Selesai", "date": end})
+        else:
+            start = acts_i[0].start_at if acts_i else None
+            steps.append({"label": label, "state": "current", "note": "Berjalan", "date": start})
+    return steps
+
+
 def fleet_cards(vessels) -> list[dict]:
     """Armada page: per vessel — identity, posisi sekarang, this-year performa
     tiles, and the three latest voyages (full history lives on the riwayat page)."""
@@ -538,6 +566,7 @@ def fleet_cards(vessels) -> list[dict]:
                 "since_days": (timezone.now() - since).days if since else None,
                 "chip_label": chip_label if last else None,
                 "chip_kind": chip_kind if last else None,
+                "step": step if last else None,
                 "route_from": frm,
                 "route_to": to,
                 "started": start,
@@ -559,11 +588,15 @@ def fleet_cards(vessels) -> list[dict]:
         for v in voyages[:3]:
             start, end = _periode(v)
             last3.append({"voyage": v, "route": route(v), "start": start, "end": end})
+        tracker_voyage = ongoing or (voyages[0] if voyages else None)
         cards.append(
             {
                 "vessel": vessel,
                 "ongoing": ongoing,
                 "now": now,
+                "charterer": ongoing.charterer.code if ongoing and ongoing.charterer else None,
+                "tracker": _tracker(tracker_voyage) if tracker_voyage else None,
+                "tracker_voyage": tracker_voyage,
                 "last3": last3,
                 "year": year,
                 **_year_totals(voyages, year),

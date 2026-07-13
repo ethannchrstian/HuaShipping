@@ -64,7 +64,7 @@
     <div id="strip-aktif" class="mt-4 flex-1 {% if cards|length > 2 %}flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2{% else %}grid gap-4 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2{% endif %}">
       {% for c in cards %}
       <article class="relative flex min-w-0 flex-col rounded-xl border border-line p-4 transition-shadow hover:shadow-lift {% if cards|length > 2 %}w-full shrink-0 snap-start md:w-[calc(50%-8px)]{% endif %}">
-        <img src="{% static 'voyages/ship.png' %}" alt="" aria-hidden="true"
+        <img src="{% static 'voyages/ship-v2.png' %}" alt="" aria-hidden="true"
              class="pointer-events-none absolute right-2 top-9 w-[110px] select-none">
         <div class="flex items-start justify-between gap-3">
           <a href="{% url 'voyage_detail' c.voyage.pk %}" class="text-[21px] font-bold tracking-tight text-action hover:underline">{{ c.voyage.code }}</a>

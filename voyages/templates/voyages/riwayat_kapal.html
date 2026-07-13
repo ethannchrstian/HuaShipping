@@ -3,52 +3,99 @@
 {% block title %}Riwayat {{ vessel.tug_name }}{% endblock %}
 {% block container %}max-w-[1400px]{% endblock %}
 {% block content %}
-<p class="text-[14px] text-ink-soft"><a href="{% url 'rekap' %}" class="font-[550] text-action hover:underline">Ringkasan</a> <span class="text-ink-faint">/</span> <a href="{% url 'armada' %}" class="font-[550] text-action hover:underline">Armada</a> <span class="text-ink-faint">/</span> Riwayat {{ vessel.tug_name }}</p>
+<p class="flex items-center gap-2 text-[14px] text-ink-soft">
+  <a href="{% url 'armada' %}" class="flex items-center gap-1.5 font-[550] text-action hover:underline">
+    <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+    Armada
+  </a>
+  <span class="text-ink-faint">/</span> {{ vessel.tug_name }} <span class="text-ink-faint">/</span> Riwayat voyage
+</p>
 
-<header class="mt-3 animate-rise">
-  <h1 class="text-[26px] font-bold tracking-tight">Riwayat voyage</h1>
-  <p class="mt-1 text-[15px] text-ink-soft">Riwayat perjalanan dan kinerja {{ vessel.tug_name }} &amp; {{ vessel.barge_name }} — semua angka dihitung ulang dari catatan kegiatan.</p>
+<header class="mt-3 flex flex-wrap items-start justify-between gap-4 animate-rise">
+  <div>
+    <h1 class="text-[26px] font-bold tracking-tight">Riwayat voyage</h1>
+    <p class="mt-1 text-[15px] text-ink-soft">Riwayat perjalanan dan kinerja {{ vessel.tug_name }} &amp; {{ vessel.barge_name }}.</p>
+  </div>
+  <a class="btn btn-secondary" href="{% url 'ekspor_csv' %}?kapal={{ vessel.pk }}">
+    <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+    Ekspor
+  </a>
 </header>
 
 {% with f=cards.0 %}
 <section class="card mt-5 flex flex-wrap items-center gap-6 animate-rise p-5" aria-label="Ringkasan kapal">
   <div class="flex items-center gap-4">
-    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#eff4fb] p-1.5">
-      <img src="{% static 'voyages/ship.png' %}" alt="" class="max-h-full max-w-full">
+    <span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-[#e7eefb] p-2.5">
+      <img src="{% static 'voyages/ship-v2.png' %}" alt="" class="max-h-full max-w-full">
     </span>
     <div>
       <h2 class="text-[16px] font-[700] tracking-tight">{{ vessel.tug_name }}</h2>
       <p class="text-[13px] text-ink-soft">{{ vessel.barge_name }}</p>
-      <p class="mt-1.5">
+      <p class="mt-1.5 flex flex-wrap items-center gap-2">
         {% if not vessel.active %}<span class="chip bg-[#f2f4f7] text-ink-soft">Nonaktif</span>
         {% elif f.ongoing %}<span class="chip chip-info">Berjalan · {{ f.ongoing.code }}</span>
         {% else %}<span class="chip chip-ok">Siap</span>{% endif %}
+        {% if f.ongoing and f.now.route_from or f.ongoing and f.now.route_to %}
+        <span class="text-[13px] text-ink-soft">{{ f.now.route_from|default:"?" }} → {{ f.now.route_to|default:"?" }}</span>
+        {% endif %}
       </p>
     </div>
   </div>
   <div class="ml-auto grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-    <div class="rounded-lg bg-info-bg px-4 py-3"><p class="text-[19px] font-[700] tabular-nums text-info-ink">{{ n_voyages }}</p><p class="text-[12.5px] text-ink-soft">Voyage {{ year }}</p></div>
-    <div class="rounded-lg bg-ok-bg px-4 py-3"><p class="text-[19px] font-[700] tabular-nums text-ok-ink">{{ mt }}</p><p class="text-[12.5px] text-ink-soft">MT muatan</p></div>
-    <div class="rounded-lg bg-live-bg px-4 py-3"><p class="text-[19px] font-[700] tabular-nums text-live-ink">{{ port_days }}</p><p class="text-[12.5px] text-ink-soft">Hari pelabuhan</p></div>
-    <div class="rounded-lg bg-bad-bg px-4 py-3"><p class="text-[19px] font-[700] tabular-nums text-bad-ink">{{ dem_days }}</p><p class="text-[12.5px] text-ink-soft">Hari demurrage</p></div>
-    <div class="rounded-lg bg-[#f2f4f7] px-4 py-3"><p class="text-[19px] font-[700] tabular-nums">{% if pct_kontrak is not None %}{{ pct_kontrak }}%{% else %}—{% endif %}</p><p class="text-[12.5px] text-ink-soft">Sesuai kontrak</p></div>
+    <div class="flex items-center gap-2.5 rounded-lg bg-info-bg px-3.5 py-3">
+      <svg class="h-4 w-4 shrink-0 text-info-ink" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></svg>
+      <div><p class="text-[17px] font-[700] tabular-nums leading-tight text-info-ink">{{ n_voyages }}</p><p class="text-[12px] text-ink-soft">Voyage {{ year }}</p></div>
+    </div>
+    <div class="flex items-center gap-2.5 rounded-lg bg-ok-bg px-3.5 py-3">
+      <svg class="h-4 w-4 shrink-0 text-ok-ink" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
+      <div><p class="text-[17px] font-[700] tabular-nums leading-tight text-ok-ink">{{ mt }}</p><p class="text-[12px] text-ink-soft">MT muatan</p></div>
+    </div>
+    <div class="flex items-center gap-2.5 rounded-lg bg-live-bg px-3.5 py-3">
+      <svg class="h-4 w-4 shrink-0 text-live-ink" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>
+      <div><p class="text-[17px] font-[700] tabular-nums leading-tight text-live-ink">{{ port_days }}</p><p class="text-[12px] text-ink-soft">Hari pelabuhan</p></div>
+    </div>
+    <div class="flex items-center gap-2.5 rounded-lg bg-bad-bg px-3.5 py-3">
+      <svg class="h-4 w-4 shrink-0 text-bad-ink" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 20h16a2 2 0 0 0 1.73-2Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <div><p class="text-[17px] font-[700] tabular-nums leading-tight text-bad-ink">{{ dem_days }}</p><p class="text-[12px] text-ink-soft">Hari demurrage</p></div>
+    </div>
+    <div class="flex items-center gap-2.5 rounded-lg bg-[#f2f4f7] px-3.5 py-3">
+      <svg class="h-4 w-4 shrink-0 text-ink-soft" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div><p class="text-[17px] font-[700] tabular-nums leading-tight">{% if pct_kontrak is not None %}{{ pct_kontrak }}%{% else %}—{% endif %}</p><p class="text-[12px] text-ink-soft">Sesuai kontrak</p></div>
+    </div>
   </div>
 </section>
 {% endwith %}
 
-<section class="card mt-5 animate-rise overflow-hidden" style="animation-delay: 80ms" aria-label="Riwayat voyage">
-  <div class="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
-    <h2 class="text-[17px] font-[650]">Voyage tahun {{ year }} <span class="ml-1 text-[14px] font-[500] text-ink-soft">{{ rows|length }}</span></h2>
-    {% if years|length > 1 %}
-    <form method="get" class="flex items-center gap-2">
-      <label class="text-[13.5px] font-[550] text-ink-soft" for="tahun">Tahun</label>
-      <select name="tahun" id="tahun" onchange="this.form.submit()">
-        {% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </form>
-    {% endif %}
+<form method="get" class="card mt-4 flex flex-wrap items-center gap-3 p-3.5 animate-rise" style="animation-delay: 60ms">
+  <label class="flex items-center gap-2 text-[13.5px] font-[550] text-ink-soft">Tahun
+    <select name="tahun">
+      {% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="flex items-center gap-2 text-[13.5px] font-[550] text-ink-soft">Status
+    <select name="status">
+      <option value="">Semua status</option>
+      {% for value, label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="flex items-center gap-2 text-[13.5px] font-[550] text-ink-soft">Rute
+    <select name="rute" class="max-w-64">
+      <option value="">Semua rute</option>
+      {% for r in routes %}<option value="{{ r }}" {% if filters.rute == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+  <div class="relative min-w-52 flex-1">
+    <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="search" name="cari" value="{{ filters.cari }}" placeholder="Cari kode voyage, rute, atau pelabuhan…" class="pl-10!" aria-label="Cari voyage">
   </div>
-  <div class="mt-3 overflow-x-auto">
+  <button type="submit" class="btn btn-secondary">
+    <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    Filter
+  </button>
+</form>
+
+<section class="card mt-4 animate-rise overflow-hidden" style="animation-delay: 120ms" aria-label="Riwayat voyage">
+  <div class="overflow-x-auto">
     <table class="w-full text-[14.5px]">
       <thead>
         <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
@@ -67,7 +114,7 @@
         <tr class="cursor-pointer border-t border-line-soft transition-colors hover:bg-[#f5f8fc]"
             onclick="window.location='{% url 'voyage_detail' r.voyage.pk %}'">
           <td class="whitespace-nowrap px-5 py-3.5"><a class="font-[650] text-action hover:underline" href="{% url 'voyage_detail' r.voyage.pk %}">{{ r.voyage.code }}</a></td>
-          <td class="min-w-52 px-4 py-3.5">{{ r.route }}</td>
+          <td class="min-w-52 px-4 py-3.5">{% if r.route != "—" %}{{ r.route }}{% else %}<span class="text-ink-faint">Rute belum diisi</span>{% endif %}</td>
           <td class="whitespace-nowrap px-4 py-3.5">
             {% if r.voyage.status == "ONGOING" %}<span class="chip chip-info">Berjalan</span>
             {% else %}<span class="chip chip-ok">Selesai</span>{% endif %}
@@ -86,11 +133,11 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="border-t border-line-soft px-5 py-10 text-center text-ink-soft">Tidak ada voyage pada tahun {{ year }}.</td></tr>
+        <tr><td colspan="8" class="border-t border-line-soft px-5 py-10 text-center text-ink-soft">Tidak ada voyage yang cocok pada tahun {{ year }}.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  <p class="border-t border-line-soft px-5 py-3.5 text-[13px] text-ink-soft">Menampilkan {{ rows|length }} voyage tahun {{ year }}.</p>
+  <p class="border-t border-line-soft px-5 py-3.5 text-[13px] text-ink-soft">Menampilkan {{ rows|length }} dari {{ n_total }} voyage tahun {{ year }}.</p>
 </section>
 {% endblock %}

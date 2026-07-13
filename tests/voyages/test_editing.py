@@ -324,7 +324,8 @@ class TestArmada:
     def test_cards_show_status_last3_and_riwayat_link(self, admin, data):
         html = admin.get("/armada/").content.decode()
         assert "TB. HUA Navigator 1" in html and "TB. HUA Navigator 2" in html
-        assert "Posisi sekarang" in html and "Performa tahun" in html
+        assert "Progres voyage" in html and "Performa tahun" in html
+        assert "Total armada" in html and "Voyage selesai" in html  # KPI strip
         assert "Lihat riwayat lengkap" in html
         # only the three latest voyages inline — deep history lives on riwayat
         assert "V2607" in html and "V2501" not in html

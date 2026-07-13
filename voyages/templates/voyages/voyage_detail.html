@@ -22,6 +22,9 @@
         Cetak time sheet
       </a>
       {% if not voyage.locked %}
+        {% if can_delete %}
+          <a class="btn btn-danger" href="{% url 'voyage_delete' voyage.pk %}">Hapus voyage</a>
+        {% endif %}
         <a class="btn btn-secondary" href="{% url 'voyage_edit' voyage.pk %}">Ubah voyage</a>
         {% if voyage.status == "ONGOING" %}
           <a class="btn btn-primary" href="{% url 'voyage_complete' voyage.pk %}">Selesaikan voyage</a>
@@ -117,12 +120,20 @@
       </thead>
       <tbody>
         {% for row in timeline %}
+        {% if row.kind == "subtotal" %}
+        <tr class="border-t border-line-soft bg-[#eaf4e2]">
+          <td class="px-3 py-3"></td>
+          <td colspan="3" class="whitespace-nowrap px-4 py-3 text-[14.5px] font-[700]">{{ row.label }}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-right text-[14.5px] font-[700] tabular-nums">{{ row.hari }} hari {{ row.waktu }}</td>
+          <td colspan="{% if voyage.locked %}1{% else %}2{% endif %}" class="whitespace-nowrap px-4 py-3 text-[13.5px] font-[550] text-ink-soft">= {{ row.normalized }}</td>
+        </tr>
+        {% else %}
         <tr class="border-t border-line-soft
                    {% if editing_activity and editing_activity.pk == row.activity.pk %}bg-action-tint
                    {% elif row.ongoing %}bg-info-bg/60
-                   {% elif forloop.counter|divisibleby:2 %}bg-[#f8fafc]{% endif %}
+                   {% elif row.fill %}bg-[#e9f0fa]{% endif %}
                    {% if row.is_sailing %}shadow-[inset_3px_0_0_0_#9db8dd]{% endif %}">
-          <td class="whitespace-nowrap px-3 py-3.5 text-right tabular-nums text-ink-faint">{{ forloop.counter }}</td>
+          <td class="whitespace-nowrap px-3 py-3.5 text-right tabular-nums text-ink-faint">{{ row.no }}</td>
           <td class="whitespace-nowrap px-4 py-3.5 text-[15px] font-[600]">{{ row.activity.activity_type.label_id }}</td>
           <td class="whitespace-nowrap px-4 py-3.5 tabular-nums">{{ row.activity.start_at|date:"j M Y H:i" }}</td>
           <td class="whitespace-nowrap px-4 py-3.5 tabular-nums">{% if row.activity.end_at %}{{ row.activity.end_at|date:"j M Y H:i" }}{% else %}<em class="text-info-ink">masih berjalan</em>{% endif %}</td>
@@ -138,6 +149,7 @@
         <tr class="{% if row.warning_kind == 'gap' %}bg-live-bg text-live-ink{% else %}bg-bad-bg text-bad-ink{% endif %}">
           <td colspan="{% if voyage.locked %}6{% else %}7{% endif %}" class="px-4 py-2.5 text-[14px]">{{ row.warning }}</td>
         </tr>
+        {% endif %}
         {% endif %}
         {% empty %}
         <tr><td colspan="{% if voyage.locked %}6{% else %}7{% endif %}" class="border-t border-line-soft px-4 py-10 text-center text-ink-soft">Belum ada kegiatan tercatat — mulai dengan perjalanan ke lokasi muat di bawah.</td></tr>
@@ -159,11 +171,29 @@
     {% endif %}
       {% csrf_token %}
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div>
-          <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.activity_type.id_for_label }}">{{ form.activity_type.label }}</label>
-          {{ form.activity_type }}
-          {% for e in form.activity_type.errors %}<p class="mt-1 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
-        </div>
+        <fieldset class="sm:col-span-2 lg:col-span-3">
+          <legend class="mb-2 text-[13.5px] font-[550] text-ink-soft">{{ form.activity_type.label }}</legend>
+          <div class="flex flex-wrap gap-x-7 gap-y-3">
+            {% for g in type_groups %}
+            <div>
+              <p class="text-[11.5px] font-[650] uppercase tracking-wider text-ink-faint">{{ g.label }}</p>
+              <div class="mt-1.5 flex flex-wrap gap-1.5">
+                {% for t in g.types %}
+                <label class="cursor-pointer">
+                  <input type="radio" name="{{ form.activity_type.html_name }}" value="{{ t.code }}" class="peer sr-only" {% if form.activity_type.value == t.code %}checked{% endif %}>
+                  <span class="inline-block rounded-full border border-line bg-white px-3 py-1.5 text-[13.5px] font-[550] text-ink-soft transition hover:border-ink-faint peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-action
+                    {% if g.kind == 'ok' %}peer-checked:border-ok-ink peer-checked:bg-ok-bg peer-checked:text-ok-ink
+                    {% elif g.kind == 'info' %}peer-checked:border-info-ink peer-checked:bg-info-bg peer-checked:text-info-ink
+                    {% elif g.kind == 'live' %}peer-checked:border-live-ink peer-checked:bg-live-bg peer-checked:text-live-ink
+                    {% else %}peer-checked:border-ink peer-checked:bg-[#f2f4f7] peer-checked:text-ink{% endif %}">{{ t.label }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% for e in form.activity_type.errors %}<p class="mt-1.5 text-[13.5px] font-[550] text-bad-ink">{{ e }}</p>{% endfor %}
+        </fieldset>
         <div>
           <label class="mb-1.5 block text-[13.5px] font-[550] text-ink-soft" for="{{ form.start_at.id_for_label }}">{{ form.start_at.label }}</label>
           {{ form.start_at }}

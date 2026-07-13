@@ -15,7 +15,16 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_POST
 
 from . import presenters, reports
-from .forms import NEXT_TYPE, ActivityForm, ParcelFormSet, VoyageForm, next_code
+from .forms import (
+    NEXT_TYPE,
+    ActivityForm,
+    ChartererForm,
+    JettyForm,
+    ParcelFormSet,
+    VesselForm,
+    VoyageForm,
+    next_code,
+)
 from .models import Activity, Charterer, Jetty, Vessel, Voyage
 
 
@@ -179,6 +188,8 @@ def _detail_context(request, voyage, form=None, editing_activity=None):
         ),
         "form": form,
         "editing_activity": editing_activity,
+        "type_groups": presenters.activity_type_groups(),
+        "can_delete": not voyage.activities.exists(),
     }
 
 
@@ -302,6 +313,39 @@ def voyage_unlock(request, pk):
     )
 
 
+@login_required
+def voyage_delete(request, pk):
+    """Delete a voyage that has no activities yet (mis-clicks on 'Voyage baru').
+    Anything with recorded kegiatan must be kept — that data is the time sheet."""
+    voyage = get_object_or_404(Voyage, pk=pk)
+    if voyage.activities.exists():
+        messages.error(
+            request,
+            f"Voyage {voyage.code} sudah punya kegiatan tercatat — tidak bisa dihapus.",
+        )
+        return redirect("voyage_detail", pk=pk)
+    if request.method == "POST":
+        code = voyage.code
+        voyage.delete()
+        messages.success(request, f"Voyage {code} dihapus.")
+        return redirect("rekap")
+    return render(
+        request,
+        "voyages/confirm.html",
+        {
+            "voyage": voyage,
+            "title": f"Hapus voyage {voyage.code}?",
+            "body": (
+                "Voyage ini belum punya kegiatan, jadi aman dihapus. "
+                "Data kapal dan pencharter tidak ikut terhapus."
+            ),
+            "cautions": [],
+            "confirm_label": "Hapus voyage",
+            "danger": True,
+        },
+    )
+
+
 # ---------------------------------------------------------------- S5 activities
 
 
@@ -386,3 +430,47 @@ def activity_restore(request, pk):
     restored.save()
     messages.success(request, f"Kegiatan “{restored.activity_type.label_id}” dipulihkan.")
     return redirect(reverse("voyage_detail", args=[restored.voyage_id]) + "#entri")
+
+
+# ---------------------------------------------------------------- Data master
+# The admins run the fleet themselves: kapal, jetty, and pencharter are added
+# in-app here, never through the Django admin.
+
+MASTER = {
+    "kapal": (Vessel, VesselForm, "Kapal"),
+    "jetty": (Jetty, JettyForm, "Jetty"),
+    "pencharter": (Charterer, ChartererForm, "Pencharter"),
+}
+
+
+@login_required
+def data_master(request):
+    context = {
+        "vessels": Vessel.objects.order_by("-active", "name"),
+        "jetties": Jetty.objects.order_by("port", "name"),
+        "charterers": Charterer.objects.order_by("code"),
+    }
+    return render(request, "voyages/data_master.html", context)
+
+
+@login_required
+def master_edit(request, jenis, pk=None):
+    if jenis not in MASTER:
+        return redirect("data_master")
+    model, form_class, label = MASTER[jenis]
+    obj = get_object_or_404(model, pk=pk) if pk else None
+    if request.method == "POST":
+        form = form_class(request.POST, instance=obj)
+        if form.is_valid():
+            saved = form.save()
+            verb = "diubah" if obj else "ditambahkan"
+            messages.success(request, f"{label} “{saved}” {verb}.")
+            return redirect("data_master")
+    else:
+        form = form_class(instance=obj)
+    title = f"Ubah {label.lower()}" if obj else f"Tambah {label.lower()}"
+    return render(
+        request,
+        "voyages/master_form.html",
+        {"form": form, "title": title, "label": label, "obj": obj},
+    )

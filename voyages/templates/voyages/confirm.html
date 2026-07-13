@@ -10,7 +10,7 @@
   {% endfor %}
   <form method="post" class="mt-5 flex items-center gap-2.5">
     {% csrf_token %}
-    <button type="submit" class="btn btn-primary">{{ confirm_label }}</button>
+    <button type="submit" class="btn {% if danger %}btn-danger{% else %}btn-primary{% endif %}">{{ confirm_label }}</button>
     <a class="btn btn-secondary" href="{% url 'voyage_detail' voyage.pk %}">Batal</a>
   </form>
 </div>

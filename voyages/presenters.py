@@ -62,25 +62,91 @@ def warning_text(w) -> str:
     )
 
 
+def _segments(activities) -> list[dict]:
+    """Sheet-style legs: one sailing activity + the port rows that follow it."""
+    segs: list[dict] = []
+    for i, a in enumerate(activities):
+        if a.activity_type.is_sailing or not segs:
+            segs.append({"start": i, "rows": 0, "from": a.from_location, "to": a.to_location})
+        segs[-1]["rows"] += 1
+    return segs
+
+
+def _block_subtotals(activities, acts) -> dict[int, dict]:
+    """Excel-style 'Total Kegiatan Muat (A)' rows, keyed by the activity index
+    they print after (the end of the sheet segment containing the block)."""
+    blocks = split_port_blocks(acts)
+    letters = "ABCDEFG"
+    segs = _segments(activities)
+    block_last = {acts.index(block[-1]): idx for idx, block in enumerate(blocks.in_order)}
+    out: dict[int, dict] = {}
+    pending = None
+    for i in range(len(activities)):
+        if i in block_last:
+            pending = block_last[i]
+        if pending is not None and any(s["start"] + s["rows"] - 1 == i for s in segs):
+            block = blocks.in_order[pending]
+            side = "Muat" if block in blocks.load else "Bongkar"
+            pair = block_sheet_pair(block)
+            out[i] = {
+                "label": f"Total Kegiatan {side} ({letters[pending]})",
+                "hari": str(pair.days),
+                "waktu": _waktu_jam(pair.time),
+                "normalized": dur_id(pair.as_timedelta()),
+            }
+            pending = None
+    return out
+
+
 def timeline(voyage: Voyage) -> list[dict]:
-    """Activity rows with computed duration and any warning that follows them."""
+    """Activity rows with computed durations, Excel-style block subtotal rows,
+    and any warning that follows an activity."""
     activities = list(voyage.activities.select_related("activity_type"))
     acts = [a.to_domain() for a in activities]
     warns = {w.after_index: w for w in log_warnings(acts)}
+    subtotals = _block_subtotals(activities, acts) if acts else {}
     rows = []
     for i, a in enumerate(activities):
         dur = activity_duration(acts[i].start_at, acts[i].end_at)
         rows.append(
             {
+                "kind": "activity",
+                "no": i + 1,
                 "activity": a,
                 "duration": dur_id(dur) if dur is not None else "berjalan",
                 "ongoing": a.end_at is None,
                 "is_sailing": a.activity_type.is_sailing,
+                # blue tint on port work/waiting rows, like the Excel sheet
+                "fill": not a.activity_type.is_sailing and a.activity_type.phase != "prep",
                 "warning": warning_text(warns[i]) if i in warns else None,
                 "warning_kind": warns[i].code if i in warns else None,
             }
         )
+        if i in subtotals:
+            rows.append({"kind": "subtotal", **subtotals[i]})
     return rows
+
+
+# The kegiatan picker: pills grouped by phase, colors matching the timeline.
+TYPE_GROUPS = (
+    ("Berlayar", "ok", ("ballast", "laden", "shifting")),
+    ("Muat", "info", ("waiting_berth_load", "waiting_load", "loading", "waiting_cast_off")),
+    ("Bongkar", "live", ("waiting_berth_discharge", "waiting_discharge", "discharging")),
+    ("Lainnya", "neutral", ("preparation",)),
+)
+
+
+def activity_type_groups() -> list[dict]:
+    from domain.model import ACTIVITY_TYPES
+
+    return [
+        {
+            "label": label,
+            "kind": kind,
+            "types": [{"code": c, "label": ACTIVITY_TYPES[c].label_id} for c in codes],
+        }
+        for label, kind, codes in TYPE_GROUPS
+    ]
 
 
 def summary(voyage: Voyage) -> dict:
@@ -215,33 +281,8 @@ def print_sheet(voyage: Voyage) -> dict:
     acts = [a.to_domain() for a in activities]
     blocks = split_port_blocks(acts)
     letters = "ABCDEFG"
-
-    # segments = one sailing leg + the port rows that follow it, mirroring the
-    # sheet's merged BERANGKAT/TIBA cells; block subtotals print at segment end
-    segments: list[dict] = []
-    for i, a in enumerate(activities):
-        if a.activity_type.is_sailing or not segments:
-            segments.append({"start": i, "rows": 0, "from": a.from_location, "to": a.to_location})
-        segments[-1]["rows"] += 1
-
-    block_last = {acts.index(block[-1]): idx for idx, block in enumerate(blocks.in_order)}
-    subtotal_after: dict[int, dict] = {}
-    pending = None
-    for i in range(len(activities)):
-        if i in block_last:
-            pending = block_last[i]
-        seg_end = any(s["start"] + s["rows"] - 1 == i for s in segments)
-        if pending is not None and seg_end:
-            block = blocks.in_order[pending]
-            side = "Muat" if block in blocks.load else "Bongkar"
-            pair = block_sheet_pair(block)
-            subtotal_after[i] = {
-                "label": f"Total Kegiatan {side} ({letters[pending]})",
-                "hari": str(pair.days),
-                "waktu": _waktu_jam(pair.time),
-            }
-            pending = None
-
+    segments = _segments(activities)
+    subtotal_after = _block_subtotals(activities, acts) if acts else {}
     seg_first = {s["start"]: s for s in segments}
     is_ongoing = voyage.status == Voyage.Status.ONGOING
     rows = []

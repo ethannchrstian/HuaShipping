@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Data master{% endblock %}
+{% block container %}max-w-[1400px]{% endblock %}
+{% block content %}
+<header class="animate-rise">
+  <h1 class="text-[26px] font-bold tracking-tight">Data master</h1>
+  <p class="mt-1 text-[15px] text-ink-soft">Kapal, jetty, dan pencharter yang dipakai di seluruh aplikasi — tambah di sini, langsung muncul di formulir voyage.</p>
+</header>
+
+<div class="mt-6 grid items-start gap-5 xl:grid-cols-3">
+
+  <section class="card animate-rise overflow-hidden" aria-label="Kapal">
+    <div class="flex items-center justify-between gap-3 px-5 pt-5">
+      <h2 class="text-[17px] font-[650]">Kapal <span class="ml-1 text-[14px] font-[500] text-ink-soft">{{ vessels|length }}</span></h2>
+      <a class="btn btn-secondary" href="{% url 'master_create' 'kapal' %}">+ Tambah kapal</a>
+    </div>
+    <p class="mt-1 px-5 text-[13px] text-ink-soft">Satu baris = satu pasangan tugboat &amp; tongkang.</p>
+    <table class="mt-3 w-full text-[14.5px]">
+      <thead>
+        <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
+          <th scope="col" class="px-5 py-2.5 font-[600]">Nama</th>
+          <th scope="col" class="px-4 py-2.5 font-[600]">Status</th>
+          <th scope="col" class="px-4 py-2.5"><span class="sr-only">Aksi</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vessels %}
+        <tr class="border-t border-line-soft">
+          <td class="px-5 py-3">
+            <span class="block font-[600]">{{ v.tug_name }}</span>
+            <span class="block text-[13px] text-ink-soft">{{ v.barge_name }}</span>
+          </td>
+          <td class="whitespace-nowrap px-4 py-3">{% if v.active %}<span class="chip chip-ok">Aktif</span>{% else %}<span class="chip bg-[#f2f4f7] text-ink-soft">Nonaktif</span>{% endif %}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-right"><a class="font-[550] text-action hover:underline" href="{% url 'master_edit' 'kapal' v.pk %}">Ubah</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="border-t border-line-soft px-5 py-8 text-center text-ink-soft">Belum ada kapal.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card animate-rise overflow-hidden" style="animation-delay: 80ms" aria-label="Jetty">
+    <div class="flex items-center justify-between gap-3 px-5 pt-5">
+      <h2 class="text-[17px] font-[650]">Jetty <span class="ml-1 text-[14px] font-[500] text-ink-soft">{{ jetties|length }}</span></h2>
+      <a class="btn btn-secondary" href="{% url 'master_create' 'jetty' %}">+ Tambah jetty</a>
+    </div>
+    <p class="mt-1 px-5 text-[13px] text-ink-soft">Tempat muat dan bongkar — kota dipakai sebagai nama singkat rute.</p>
+    <table class="mt-3 w-full text-[14.5px]">
+      <thead>
+        <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
+          <th scope="col" class="px-5 py-2.5 font-[600]">Jetty</th>
+          <th scope="col" class="px-4 py-2.5 font-[600]">Kota</th>
+          <th scope="col" class="px-4 py-2.5"><span class="sr-only">Aksi</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for j in jetties %}
+        <tr class="border-t border-line-soft">
+          <td class="px-5 py-3 font-[600]">{{ j.name }}</td>
+          <td class="px-4 py-3 text-ink-soft">{{ j.port|default:"—" }}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-right"><a class="font-[550] text-action hover:underline" href="{% url 'master_edit' 'jetty' j.pk %}">Ubah</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="border-t border-line-soft px-5 py-8 text-center text-ink-soft">Belum ada jetty.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card animate-rise overflow-hidden" style="animation-delay: 160ms" aria-label="Pencharter">
+    <div class="flex items-center justify-between gap-3 px-5 pt-5">
+      <h2 class="text-[17px] font-[650]">Pencharter <span class="ml-1 text-[14px] font-[500] text-ink-soft">{{ charterers|length }}</span></h2>
+      <a class="btn btn-secondary" href="{% url 'master_create' 'pencharter' %}">+ Tambah pencharter</a>
+    </div>
+    <p class="mt-1 px-5 text-[13px] text-ink-soft">Kode singkat sesuai yang tertulis di kontrak.</p>
+    <table class="mt-3 w-full text-[14.5px]">
+      <thead>
+        <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">
+          <th scope="col" class="px-5 py-2.5 font-[600]">Kode</th>
+          <th scope="col" class="px-4 py-2.5 font-[600]">Nama lengkap</th>
+          <th scope="col" class="px-4 py-2.5"><span class="sr-only">Aksi</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in charterers %}
+        <tr class="border-t border-line-soft">
+          <td class="whitespace-nowrap px-5 py-3 font-[600]">{{ c.code }}</td>
+          <td class="px-4 py-3 text-ink-soft">{{ c.name|default:"—" }}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-right"><a class="font-[550] text-action hover:underline" href="{% url 'master_edit' 'pencharter' c.pk %}">Ubah</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="border-t border-line-soft px-5 py-8 text-center text-ink-soft">Belum ada pencharter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ from datetime import date
 from django import forms
 from django.forms import inlineformset_factory
 
-from .models import Activity, ActivityType, Parcel, Vessel, Voyage
+from .models import Activity, ActivityType, Charterer, Jetty, Parcel, Vessel, Voyage
 
 DATETIME_LOCAL = "%Y-%m-%dT%H:%M"
 
@@ -62,6 +62,27 @@ class VoyageForm(forms.ModelForm):
             "demurrage_rate_idr": "Kosongkan bila kontrak menulis “-”",
         }
         widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
+
+    def clean_vessel(self):
+        """One boat, one voyage: refuse a new voyage while another is berjalan."""
+        vessel = self.cleaned_data["vessel"]
+        qs = vessel.voyages.filter(status=Voyage.Status.ONGOING)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        ongoing = qs.order_by("code").last()
+        if ongoing:
+            last = ongoing.activities.select_related("activity_type").last()
+            if last is None:
+                doing = "belum ada kegiatan tercatat"
+            elif last.activity_type.is_sailing and last.to_location:
+                doing = f"sedang {last.activity_type.label_id} menuju {last.to_location}"
+            else:
+                doing = f"sedang {last.activity_type.label_id}"
+            raise forms.ValidationError(
+                f"{vessel.tug_name} masih menjalankan voyage {ongoing.code} — {doing}. "
+                f"Selesaikan voyage itu terlebih dahulu sebelum membuat voyage baru."
+            )
+        return vessel
 
     def clean(self):
         cleaned = super().clean()
@@ -138,3 +159,50 @@ class ActivityForm(forms.ModelForm):
                 "Jam selesai lebih awal dari jam mulai — periksa kembali tanggalnya.",
             )
         return cleaned
+
+
+class VesselForm(forms.ModelForm):
+    """Data master: admins add tug+barge sets themselves; the combined name is
+    composed automatically so the pair is always displayed consistently."""
+
+    class Meta:
+        model = Vessel
+        fields = ["tug_name", "barge_name", "active"]
+        labels = {
+            "tug_name": "Nama tugboat",
+            "barge_name": "Nama tongkang",
+            "active": "Masih aktif beroperasi",
+        }
+        help_texts = {
+            "tug_name": "Contoh: TB. HUA Navigator 3",
+            "barge_name": "Contoh: BG. Palm Hero 2403",
+        }
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.name = f"{obj.tug_name} & {obj.barge_name}"
+        if commit:
+            obj.save()
+        return obj
+
+
+class JettyForm(forms.ModelForm):
+    class Meta:
+        model = Jetty
+        fields = ["name", "port"]
+        labels = {"name": "Nama jetty", "port": "Kota / pelabuhan"}
+        help_texts = {
+            "name": "Contoh: Jetty PT. Sahabat Mewah Makmur",
+            "port": "Contoh: Belitung — dipakai sebagai nama singkat rute",
+        }
+
+
+class ChartererForm(forms.ModelForm):
+    class Meta:
+        model = Charterer
+        fields = ["code", "name"]
+        labels = {"code": "Kode singkat", "name": "Nama lengkap"}
+        help_texts = {
+            "code": "Contoh: FPS — kode yang tertulis di kontrak",
+            "name": "Boleh dikosongkan",
+        }

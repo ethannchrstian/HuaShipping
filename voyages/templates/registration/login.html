@@ -32,5 +32,11 @@
     </form>
     <p class="mt-4 text-center text-[13px] text-ink-faint">Belum punya akun? Hubungi admin kantor.</p>
   </main>
+  <script>
+    // Arm the one-shot splash on the page we land on after logging in.
+    document.querySelector('form').addEventListener('submit', function () {
+      try { sessionStorage.setItem('hs-splash', '1'); } catch (e) {}
+    });
+  </script>
 </body>
 </html>

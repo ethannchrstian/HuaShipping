@@ -9,6 +9,29 @@
   <script src="{% static 'voyages/htmx.min.js' %}" defer></script>
 </head>
 <body>
+<div id="splash" class="splash" hidden aria-hidden="true">
+  <div class="splash-tile">
+    <img src="{% static 'voyages/logo.png' %}" alt="" class="splash-logo-dim">
+    <img src="{% static 'voyages/logo.png' %}" alt="" class="splash-logo-fill">
+  </div>
+  <p class="splash-name">Hua Shipping</p>
+</div>
+<script>
+  // Play the fill-up splash exactly once, right after login (flag set by the
+  // login form). Runs before first paint so the dashboard never flashes first.
+  (function () {
+    try {
+      if (!sessionStorage.getItem('hs-splash')) return;
+      sessionStorage.removeItem('hs-splash');
+      var s = document.getElementById('splash');
+      s.hidden = false;
+      s.addEventListener('animationend', function (e) {
+        if (e.animationName === 'splash-fade') s.remove();
+      });
+      setTimeout(function () { if (s.parentNode) s.remove(); }, 3000);
+    } catch (e) { /* private mode without storage: skip the splash */ }
+  })();
+</script>
 <div class="flex min-h-screen flex-col lg:flex-row">
   <aside class="bg-brand text-white lg:sticky lg:top-0 lg:h-screen lg:w-[248px] lg:shrink-0 flex flex-col">
     <div class="flex items-center gap-3 px-5 pt-6 pb-5">

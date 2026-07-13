@@ -44,16 +44,6 @@
         <p class="mt-0.5 text-[13px] text-ink-soft">Sedang berlangsung</p>
       </div>
       <div class="flex items-center gap-2">
-        {% if cards|length > 2 %}
-        <button type="button" data-geser="-1" class="inline-flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-[13.5px] font-[550] text-ink transition-colors hover:bg-canvas">
-          <svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          Sebelumnya
-        </button>
-        <button type="button" data-geser="1" class="inline-flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-[13.5px] font-[550] text-ink transition-colors hover:bg-canvas">
-          Berikutnya
-          <svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
-        {% endif %}
         <a class="inline-flex items-center gap-1.5 rounded-lg border border-line px-3.5 py-2 text-[13.5px] font-[550] text-ink transition-colors hover:bg-canvas" href="#semua-voyage">
           Lihat semua voyage
           <svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
@@ -61,11 +51,13 @@
       </div>
     </div>
 
-    <div id="strip-aktif" class="mt-4 flex-1 {% if cards|length > 2 %}flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2{% else %}grid gap-4 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2{% endif %}">
+    <div class="relative mt-4 flex-1">
+    <div id="korsel-pandang" class="{% if cards|length > 2 %}overflow-hidden{% endif %}">
+    <div id="korsel-jalur" class="{% if cards|length > 2 %}flex gap-4 transition-transform duration-[420ms] ease-[cubic-bezier(.25,.8,.35,1)]{% else %}grid gap-4 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2{% endif %}">
       {% for c in cards %}
-      <article class="relative flex min-w-0 flex-col rounded-xl border border-line p-4 transition-shadow hover:shadow-lift {% if cards|length > 2 %}w-full shrink-0 snap-start md:w-[calc(50%-8px)]{% endif %}">
+      <article class="relative flex min-w-0 flex-col rounded-xl border border-line bg-card p-4 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lift {% if cards|length > 2 %}w-[85%] shrink-0 md:w-[46%]{% endif %}">
         <img src="{% static 'voyages/ship-v2.png' %}" alt="" aria-hidden="true"
-             class="pointer-events-none absolute right-2 top-9 w-[110px] select-none">
+             class="pointer-events-none absolute right-2 top-8 w-[150px] select-none [mask-image:linear-gradient(to_left,black_70%,transparent)]">
         <div class="flex items-start justify-between gap-3">
           <a href="{% url 'voyage_detail' c.voyage.pk %}" class="text-[21px] font-bold tracking-tight text-action hover:underline">{{ c.voyage.code }}</a>
           <span class="chip chip-{{ c.chip_kind }} shrink-0">{{ c.chip_label }}</span>
@@ -84,34 +76,38 @@
           {% endif %}
         </p>
 
-        {# phase tracker: dots on a line + riding ship marker; my-auto soaks up card slack #}
-        <div class="my-auto py-3">
-          <div class="relative h-8">
-            <span class="absolute left-2 right-2 top-1/2 h-[3px] -translate-y-1/2 rounded bg-line"></span>
-            <span class="absolute left-2 top-1/2 h-[3px] origin-left -translate-y-1/2 animate-fill rounded {% if c.chip_kind == 'ok' %}bg-ok-ink{% elif c.chip_kind == 'live' %}bg-live-ink{% else %}bg-action{% endif %}"
-                  style="width: calc(({{ c.marker_pct }} / 100) * (100% - 16px))"></span>
-            <span class="absolute top-1/2 z-10 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 bg-card shadow-card {% if c.chip_kind == 'ok' %}border-ok-ink text-ok-ink{% elif c.chip_kind == 'live' %}border-live-ink text-live-ink{% else %}border-action text-action{% endif %} {% if c.phase_ongoing %}animate-bob{% endif %}"
-                  style="left: calc(8px + ({{ c.marker_pct }} / 100) * (100% - 16px))">
-              <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 18H2a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4Z"/><path d="M21 14 10 2 3 14h18Z"/><path d="M10 2v16"/></svg>
-            </span>
-            {% for s in c.steps %}
-            <span class="absolute top-1/2 -translate-y-1/2 {% if forloop.counter0 == 0 %}left-0{% elif forloop.counter0 == 1 %}left-1/2 -translate-x-1/2{% else %}right-0{% endif %}">
-              {% if s.state == 'done' %}
-                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-ok-ink text-white"><svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-              {% elif s.state == 'current' %}
-                <span class="flex h-5 w-5 {% if c.phase_ongoing %}animate-pulse-soft{% endif %} items-center justify-center rounded-full border-[3px] {% if c.chip_kind == 'live' %}border-live-ink{% elif c.chip_kind == 'ok' %}border-ok-ink{% else %}border-action{% endif %} bg-card"></span>
-              {% else %}
-                <span class="block h-3 w-3 rounded-full border-2 border-line bg-card"></span>
-              {% endif %}
-            </span>
-            {% endfor %}
-          </div>
-          <div class="mt-1.5 flex justify-between text-[12.5px]">
-            {% for s in c.steps %}
-            <span class="{% if s.state == 'current' %}font-[650] text-ink{% elif s.state == 'done' %}text-ink-soft{% else %}text-ink-faint{% endif %}">{{ s.label }}</span>
-            {% endfor %}
+        {# phase tracker (armada style): iconed circles, green done-segments, real dates #}
+        {% if c.has_activities %}
+        <div class="my-auto py-4">
+          <div class="relative">
+            <div class="absolute left-[16.66%] right-1/2 top-[14px] h-0.5 {% if c.tracker.0.state == 'done' %}bg-ok-ink{% else %}bg-line{% endif %}" aria-hidden="true"></div>
+            <div class="absolute left-1/2 right-[16.66%] top-[14px] h-0.5 {% if c.tracker.1.state == 'done' %}bg-ok-ink{% else %}bg-line{% endif %}" aria-hidden="true"></div>
+            <div class="relative grid grid-cols-3">
+              {% for s in c.tracker %}
+              <div class="flex flex-col items-center text-center">
+                <span class="flex h-[30px] w-[30px] items-center justify-center rounded-full border-2
+                  {% if s.state == 'done' %}border-ok-ink bg-ok-ink text-white
+                  {% elif s.state == 'current' %}border-ok-ink bg-card text-ok-ink {% if c.phase_ongoing %}animate-pulse-soft{% endif %}
+                  {% else %}border-line bg-card text-ink-faint{% endif %}">
+                  {% if forloop.last %}
+                  <svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>
+                  {% else %}
+                  <svg class="h-3.5 w-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></svg>
+                  {% endif %}
+                </span>
+                <p class="mt-1.5 text-[12.5px] font-[650] {% if s.state == 'todo' %}text-ink-soft{% endif %}">{{ s.label }}</p>
+                <p class="text-[11.5px] leading-snug {% if s.state == 'current' %}font-[600] text-ok-ink{% else %}text-ink-soft{% endif %}">{{ s.note }}{% if s.date %} · {{ s.date|date:"j M" }}{% endif %}</p>
+              </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
+        {% else %}
+        <div class="my-auto rounded-lg border border-dashed border-line bg-[#fafbfd] px-4 py-4 text-center">
+          <p class="text-[13.5px] text-ink-soft">Belum ada kegiatan tercatat untuk voyage ini.</p>
+          <a class="btn btn-primary mt-2.5" href="{% url 'voyage_detail' c.voyage.pk %}#entri">Catat kegiatan pertama →</a>
+        </div>
+        {% endif %}
 
         <dl class="grid grid-cols-2 gap-x-3 gap-y-3 border-t border-line-soft pt-3.5 sm:grid-cols-4">
           <div>
@@ -161,6 +157,21 @@
       </article>
       {% endfor %}
     </div>
+    </div>
+    {% if cards|length > 2 %}
+    <button type="button" id="korsel-prev" aria-label="Kartu sebelumnya"
+            class="absolute -left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card shadow-lift transition-colors hover:bg-canvas">
+      <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <button type="button" id="korsel-next" aria-label="Kartu berikutnya"
+            class="absolute -right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card shadow-lift transition-colors hover:bg-canvas">
+      <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    {% endif %}
+    </div>
+    {% if cards|length > 2 %}
+    <div id="korsel-titik" class="mt-3 flex justify-center gap-1.5"></div>
+    {% endif %}
   </section>
 
   {# ---- Pusat tindakan ---- #}
@@ -446,13 +457,47 @@
       requestAnimationFrame(tick);
     });
   }
-  // Voyage-aktif carousel (buttons only render when there are >2 cards).
-  var strip = document.getElementById("strip-aktif");
-  document.querySelectorAll("[data-geser]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      strip.scrollBy({ left: (strip.clientWidth / 2 + 8) * parseInt(btn.dataset.geser, 10), behavior: "smooth" });
+  // Voyage-aktif carousel: animated slide, third card peeks, dots + edge arrows.
+  (function () {
+    var jalur = document.getElementById("korsel-jalur");
+    var prev = document.getElementById("korsel-prev");
+    var next = document.getElementById("korsel-next");
+    var titik = document.getElementById("korsel-titik");
+    if (!jalur || !prev) return;
+    var kartu = jalur.children;
+    var i = 0;
+    function tampak() { return window.innerWidth < 768 ? 1 : 2; }
+    function maks() { return Math.max(0, kartu.length - tampak()); }
+    function render() {
+      i = Math.min(i, maks());
+      var langkah = kartu[0].getBoundingClientRect().width + 16;
+      jalur.style.transform = "translateX(" + (-i * langkah) + "px)";
+      prev.classList.toggle("hidden", i === 0);
+      prev.classList.toggle("flex", i !== 0);
+      next.classList.toggle("hidden", i >= maks());
+      next.classList.toggle("flex", i < maks());
+      Array.prototype.forEach.call(titik.children, function (d, n) {
+        d.className = n === i
+          ? "h-2 w-5 rounded-full bg-action transition-all"
+          : "h-2 w-2 rounded-full bg-line transition-all";
+      });
+    }
+    for (var n = 0; n <= maks(); n++) {
+      var d = document.createElement("button");
+      d.type = "button";
+      d.setAttribute("aria-label", "Ke kartu " + (n + 1));
+      d.dataset.ke = n;
+      titik.appendChild(d);
+    }
+    titik.addEventListener("click", function (e) {
+      var d = e.target.closest("button");
+      if (d) { i = parseInt(d.dataset.ke, 10); render(); }
     });
-  });
+    prev.addEventListener("click", function () { i = Math.max(0, i - 1); render(); });
+    next.addEventListener("click", function () { i = Math.min(maks(), i + 1); render(); });
+    window.addEventListener("resize", render);
+    render();
+  })();
   // Whole-row click targets (the voyage-code link stays for keyboard users).
   document.addEventListener("click", function (e) {
     var row = e.target.closest("tr.row-klik");

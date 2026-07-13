@@ -442,6 +442,8 @@ def vessel_cards(vessels) -> list[dict]:
                 "voyage": v,
                 "phase": last.activity_type.label_id if last else "—",
                 "phase_ongoing": last is not None and last.end_at is None,
+                "has_activities": last is not None,
+                "tracker": _tracker(v),
                 "chip_label": chip_label,
                 "chip_kind": chip_kind,
                 "steps": steps,

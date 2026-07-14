@@ -96,7 +96,33 @@
 </form>
 
 <section class="card mt-4 animate-rise overflow-hidden" style="animation-delay: 120ms" aria-label="Riwayat voyage">
-  <div class="overflow-x-auto">
+  {# phones: one card per voyage; the table below takes over from md up #}
+  <ul class="divide-y divide-line-soft md:hidden" aria-label="Daftar voyage">
+    {% for r in rows %}
+    <li>
+      <a class="block px-4 py-3.5 transition-colors active:bg-[#f5f8fc]" href="{% url 'voyage_detail' r.voyage.pk %}">
+        <span class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-[15.5px] font-[650] text-action">{{ r.voyage.code }}</span>
+          {% if r.voyage.status == "ONGOING" %}<span class="chip chip-info">Berjalan</span>
+          {% else %}<span class="chip chip-ok">Selesai</span>{% endif %}
+        </span>
+        <p class="mt-1 text-[13.5px]">{% if r.route != "—" %}{{ r.route }}{% else %}<span class="text-ink-faint">Rute belum diisi</span>{% endif %}</p>
+        <p class="mt-0.5 text-[13px] tabular-nums text-ink-soft">
+          {% if r.start %}{{ r.start|date:"j M Y" }}{% if r.end %} – {{ r.end|date:"j M Y" }}{% elif r.voyage.status == "ONGOING" %} – <em class="not-italic text-info-ink">berjalan</em>{% endif %}{% else %}Belum ada catatan kegiatan{% endif %}
+        </p>
+        <p class="mt-2 flex flex-wrap items-center justify-between gap-2 text-[13px] text-ink-soft">
+          <span class="tabular-nums">{{ r.mt|default:"—" }} MT · <span class="font-[600] text-ink">{{ r.port_days }}{% if r.laytime %} / {{ r.laytime }}{% endif %}</span> hari{% if r.dem %} · <span class="font-[650] text-bad-ink">+{{ r.dem }} demurrage</span>{% endif %}</span>
+          {% if r.performa.kind == "ok" %}<span class="chip chip-ok">{{ r.performa.label }}</span>
+          {% elif r.performa.kind == "bad" %}<span class="chip chip-bad">{{ r.performa.label }}</span>
+          {% elif r.performa %}<span class="chip bg-[#f2f4f7] text-ink-soft">{{ r.performa.label }}</span>{% endif %}
+        </p>
+      </a>
+    </li>
+    {% empty %}
+    <li class="px-4 py-10 text-center text-[14px] text-ink-soft">Tidak ada voyage yang cocok pada tahun {{ year }}.</li>
+    {% endfor %}
+  </ul>
+  <div class="hidden overflow-x-auto md:block">
     <table class="w-full text-[14.5px]">
       <thead>
         <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">

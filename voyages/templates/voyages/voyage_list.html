@@ -351,7 +351,42 @@
   </form>
 
   <div class="card mt-4 animate-rise overflow-hidden transition-opacity" id="tabel-voyage" style="animation-delay: 60ms">
-    <div class="overflow-x-auto">
+    {# phones: one tap-friendly card per voyage; the table below takes over from md up #}
+    <ul class="divide-y divide-line-soft md:hidden" aria-label="Daftar voyage">
+      {% for r in page %}
+      <li>
+        <a class="block px-4 py-3.5 transition-colors active:bg-[#f4f7fb]" href="{% url 'voyage_detail' r.voyage.pk %}">
+          <span class="flex flex-wrap items-center justify-between gap-2">
+            <span class="inline-flex items-center gap-2">
+              <span aria-hidden="true" class="h-2 w-2 rounded-full {% if r.voyage.status == 'ONGOING' %}bg-action{% else %}bg-ok-ink{% endif %}"></span>
+              <span class="text-[15.5px] font-[650] text-action">{{ r.voyage.code }}</span>
+              {% if r.voyage.status == "ONGOING" %}<span class="chip chip-info">Berjalan</span>{% endif %}
+            </span>
+            {% if r.laytime is None %}{% elif r.over %}<span class="chip chip-bad">Lebih {{ r.over_days }} hari</span>
+            {% else %}<span class="chip chip-ok">Sesuai kontrak</span>{% endif %}
+          </span>
+          <p class="mt-1 text-[13px] text-ink-soft">{{ r.vessel_short }}{% if r.voyage.charterer %} · {{ r.voyage.charterer.code }}{% endif %}</p>
+          <p class="mt-1.5 flex flex-wrap items-center gap-1.5 text-[13.5px]">
+            {% if r.route_from or r.route_to %}
+              <svg class="h-4 w-4 shrink-0 text-ok-ink" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ r.route_from|default:"?" }}
+              <svg class="h-3 w-6 shrink-0 text-ink-faint" aria-hidden="true" viewBox="0 0 32 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 8h24" stroke-dasharray="3 3"/><path d="m22 4 5 4-5 4"/></svg>
+              {{ r.route_to|default:"?" }}
+            {% else %}
+              <span class="text-ink-faint">Rute belum diisi</span>
+            {% endif %}
+          </p>
+          <p class="mt-2 flex flex-wrap items-center justify-between gap-2 text-[13px] text-ink-soft">
+            <span>Kontrak <span class="font-[600] tabular-nums {% if r.over %}text-bad-ink{% else %}text-ink{% endif %}">{{ r.port_days }} / {{ r.laytime|default_if_none:"—" }}</span> hari pelabuhan</span>
+            <span>Mulai <span class="font-[600] tabular-nums text-ink">{{ r.start|date:"j M Y"|default:"—" }}</span></span>
+          </p>
+        </a>
+      </li>
+      {% empty %}
+      <li class="px-4 py-12 text-center text-[14px] text-ink-soft">Tidak ada voyage yang cocok dengan saringan.</li>
+      {% endfor %}
+    </ul>
+    <div class="hidden overflow-x-auto md:block">
       <table class="w-full text-[14.5px]">
         <thead>
           <tr class="bg-[#f9fafb] text-left text-[12px] uppercase tracking-wider text-ink-soft">

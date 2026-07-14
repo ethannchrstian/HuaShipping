@@ -31,7 +31,7 @@
   </div>
 </div>
 
-<div class="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+<div class="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
 
   {# ---- Voyage aktif ---- #}
   <section class="card flex animate-rise flex-col p-5" aria-labelledby="judul-aktif">
@@ -52,12 +52,12 @@
     </div>
 
     <div class="relative mt-4 flex-1">
-    <div id="korsel-pandang" class="{% if cards|length > 2 %}overflow-hidden{% endif %}">
+    {# extra padding + negative margin: room for the hover lift inside overflow-hidden #}
+    <div id="korsel-pandang" class="{% if cards|length > 2 %}-mx-3 -my-4 overflow-hidden px-3 py-4{% endif %}">
     <div id="korsel-jalur" class="{% if cards|length > 2 %}flex gap-4 transition-transform duration-[420ms] ease-[cubic-bezier(.25,.8,.35,1)]{% else %}grid gap-4 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2{% endif %}">
       {% for c in cards %}
-      <article class="relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-card p-4 ease-out hover:scale-[1.015] hover:shadow-lift {% if cards|length > 2 %}w-[85%] shrink-0 md:w-[46%]{% else %}transition duration-300{% endif %}">
-        <img src="{% static 'voyages/ship-outline.png' %}" alt="" aria-hidden="true"
-             class="pointer-events-none absolute -right-5 -top-2 w-[180px] select-none opacity-[.08]">
+      <article class="kartu-voyage {% cycle 'aksen-biru' 'aksen-teal' 'aksen-ungu' 'aksen-laut' %} relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-card p-4 {% if cards|length > 2 %}w-[85%] shrink-0 md:w-[46%]{% endif %}">
+        <div class="kartu-siluet" aria-hidden="true"></div>
         <div>
           {% if c.has_activities %}
           <span class="chip chip-{{ c.chip_kind }} text-[11px] uppercase tracking-wider">{{ c.chip_label }}</span>
@@ -65,7 +65,7 @@
           <span class="chip bg-[#eef1f5] text-[11px] uppercase tracking-wider text-ink-soft">Siap</span>
           {% endif %}
         </div>
-        <a href="{% url 'voyage_detail' c.voyage.pk %}" class="mt-2 block w-fit text-[22px] font-bold tracking-tight text-action hover:underline">{{ c.voyage.code }}</a>
+        <a href="{% url 'voyage_detail' c.voyage.pk %}" class="kartu-kode mt-2 block w-fit text-[22px] font-bold tracking-tight hover:underline">{{ c.voyage.code }}</a>
         <p class="mt-0.5 text-[14px] font-[550]">{{ c.vessel.tug_name }}</p>
 
         <p class="mt-3 flex max-w-[60%] items-center gap-2 text-[13.5px]">
@@ -129,7 +129,7 @@
               <span class="h-4.5 w-4.5 shrink-0 rounded-full border-2 border-line"></span>
               Catat kegiatan pertama</a></li>
           </ul>
-          <a class="btn btn-secondary mt-3 w-full justify-center" href="{% url 'voyage_edit' c.voyage.pk %}">Mulai pengaturan →</a>
+          <a class="btn btn-isi mt-3 w-full justify-center" href="{% url 'voyage_edit' c.voyage.pk %}">Mulai pengaturan →</a>
         </div>
         {% endif %}
 
@@ -301,7 +301,7 @@
         {% endfor %}
       </select>
     </div>
-    <div class="w-36">
+    <div class="w-40">
       <label for="f-status" class="mb-1 block text-[12.5px] font-[550] text-ink-soft">Status</label>
       <select name="status" id="f-status" onchange="this.form.requestSubmit()">
         <option value="">Semua status</option>

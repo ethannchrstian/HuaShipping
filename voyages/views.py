@@ -177,6 +177,10 @@ def _detail_context(request, voyage, form=None, editing_activity=None):
             else:
                 initial["activity_type"] = "ballast"
             form = ActivityForm(initial=initial)
+    def _param_activity(name):
+        raw = request.GET.get(name, "")
+        return voyage.activities.filter(pk=raw).first() if raw.isdigit() else None
+
     return {
         "voyage": voyage,
         "timeline": presenters.timeline(voyage),
@@ -190,6 +194,9 @@ def _detail_context(request, voyage, form=None, editing_activity=None):
         "editing_activity": editing_activity,
         "type_groups": presenters.activity_type_groups(),
         "can_delete": not voyage.activities.exists(),
+        # just-added confirm strip + row highlight (?baru=, ?tutup= from activity_add)
+        "baru_activity": _param_activity("baru"),
+        "tutup_activity": _param_activity("tutup"),
     }
 
 
@@ -360,14 +367,21 @@ def activity_add(request, pk):
     if not form.is_valid():
         context = _detail_context(request, voyage, form=form)
         return render(request, "voyages/voyage_detail.html", context)
-    activity = form.save(commit=False)
-    activity.voyage = voyage
-    activity.save()
-    messages.success(
-        request, f"Kegiatan “{activity.activity_type.label_id}” tersimpan."
-    )
-    # back to the timeline with the next entry row ready (S5 batch loop)
-    return redirect(reverse("voyage_detail", args=[pk]) + "#entri")
+    with transaction.atomic():
+        # the running activity ends exactly when the next one starts (rows are
+        # contiguous, like the sheet) — close it automatically and say so
+        closed = None
+        open_act = voyage.activities.filter(end_at__isnull=True).last()
+        if open_act is not None and form.cleaned_data["start_at"] >= open_act.start_at:
+            open_act.end_at = form.cleaned_data["start_at"]
+            open_act.save()
+            closed = open_act
+        activity = form.save(commit=False)
+        activity.voyage = voyage
+        activity.save()
+    # back to the timeline: confirm strip + row highlight via ?baru, next row ready
+    params = f"?baru={activity.pk}" + (f"&tutup={closed.pk}" if closed else "")
+    return redirect(reverse("voyage_detail", args=[pk]) + params + "#entri")
 
 
 @login_required
@@ -385,7 +399,11 @@ def activity_edit(request, pk):
             return redirect(reverse("voyage_detail", args=[voyage.pk]) + "#entri")
         context = _detail_context(request, voyage, form=form, editing_activity=activity)
         return render(request, "voyages/voyage_detail.html", context)
-    context = _detail_context(request, voyage, editing_activity=activity)
+    form = None
+    if "selesai" in request.GET and activity.end_at is None:
+        # "Tandai selesai" one-tap: end = now, ready to adjust before saving
+        form = ActivityForm(instance=activity, initial={"end_at": timezone.localtime()})
+    context = _detail_context(request, voyage, form=form, editing_activity=activity)
     return render(request, "voyages/voyage_detail.html", context)
 
 
@@ -413,6 +431,28 @@ def activity_delete(request, pk):
         ),
     )
     return redirect("voyage_detail", pk=voyage.pk)
+
+
+@login_required
+@require_POST
+def activity_undo_add(request, pk):
+    """Urungkan on the just-added confirm strip: remove the new row and, when
+    one was auto-closed by it, reopen that activity (end back to None)."""
+    activity = get_object_or_404(Activity.objects.select_related("voyage"), pk=pk)
+    voyage = activity.voyage
+    if voyage.locked:
+        messages.error(request, "Voyage ini sudah terkunci — buka kunci dulu untuk mengubah.")
+        return redirect("voyage_detail", pk=voyage.pk)
+    with transaction.atomic():
+        activity.delete()
+        tutup = request.POST.get("tutup", "")
+        if tutup.isdigit():
+            reopened = voyage.activities.filter(pk=tutup).first()
+            if reopened is not None:
+                reopened.end_at = None
+                reopened.save()
+    messages.success(request, "Kegiatan terakhir dibatalkan.")
+    return redirect(reverse("voyage_detail", args=[voyage.pk]) + "#entri")
 
 
 @login_required

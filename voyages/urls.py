@@ -22,4 +22,5 @@ urlpatterns = [
     path('kegiatan/<int:pk>/ubah/', views.activity_edit, name='activity_edit'),
     path('kegiatan/<int:pk>/hapus/', views.activity_delete, name='activity_delete'),
     path('kegiatan/<int:pk>/pulihkan/', views.activity_restore, name='activity_restore'),
+    path('kegiatan/<int:pk>/urungkan/', views.activity_undo_add, name='activity_undo_add'),
 ]

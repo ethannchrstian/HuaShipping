@@ -197,7 +197,7 @@ class TestActivityEntry:
             follow=True,
         )
         assert v.activities.count() == n + 1
-        assert "tersimpan" in response.content.decode()
+        assert "dicatat" in response.content.decode()
 
     def test_end_before_start_shows_field_error(self, admin, data):
         v = voyage("Navigator 2", "V2603")
@@ -226,3 +226,100 @@ class TestActivityEntry:
         )
         assert v.activities.count() == n
         assert "terkunci" in response.content.decode()
+
+
+class TestEntryLoop:
+    """The seamless batch loop: auto-close, confirm strip, undo, tandai selesai."""
+
+    @staticmethod
+    def _add(admin, v, start_local, **extra):
+        payload = {
+            "activity_type": "waiting_cast_off",
+            "start_at": start_local,
+            "end_at": "",
+            "from_location": "",
+            "to_location": "",
+            "note": "",
+        }
+        payload.update(extra)
+        return admin.post(f"/voyage/{v.pk}/kegiatan/tambah/", payload)
+
+    def test_add_auto_closes_running_activity(self, admin, data):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        v = voyage("Navigator 2", "V2603")
+        open_act = v.activities.filter(end_at__isnull=True).last()
+        assert open_act is not None
+        start = timezone.localtime(open_act.start_at + timedelta(hours=6))
+        response = self._add(admin, v, start.strftime("%Y-%m-%dT%H:%M"))
+        assert response.status_code == 302
+        assert "baru=" in response.url and f"tutup={open_act.pk}" in response.url
+        open_act.refresh_from_db()
+        assert open_act.end_at is not None
+
+    def test_confirm_strip_highlight_and_autoclose_note(self, admin, data):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        v = voyage("Navigator 2", "V2603")
+        open_act = v.activities.filter(end_at__isnull=True).last()
+        start = timezone.localtime(open_act.start_at + timedelta(hours=6))
+        response = self._add(admin, v, start.strftime("%Y-%m-%dT%H:%M"))
+        html = admin.get(response.url).content.decode()
+        assert "dicatat — total langsung diperbarui" in html
+        assert "ditutup otomatis" in html
+        assert "Urungkan" in html
+        assert "baris-baru" in html
+
+    def test_undo_add_removes_row_and_reopens(self, admin, data):
+        from datetime import timedelta
+        from urllib.parse import parse_qs, urlparse
+
+        from django.utils import timezone
+
+        v = voyage("Navigator 2", "V2603")
+        open_act = v.activities.filter(end_at__isnull=True).last()
+        start = timezone.localtime(open_act.start_at + timedelta(hours=6))
+        response = self._add(admin, v, start.strftime("%Y-%m-%dT%H:%M"))
+        params = parse_qs(urlparse(response.url).query)
+        baru, tutup = params["baru"][0], params["tutup"][0]
+        n = v.activities.count()
+        admin.post(f"/kegiatan/{baru}/urungkan/", {"tutup": tutup})
+        assert v.activities.count() == n - 1
+        open_act.refresh_from_db()
+        assert open_act.end_at is None
+
+    def test_tandai_selesai_prefills_end(self, admin, data):
+        v = voyage("Navigator 2", "V2603")
+        open_act = v.activities.filter(end_at__isnull=True).last()
+        detail = admin.get(f"/voyage/{v.pk}/").content.decode()
+        assert "Tandai selesai" in detail
+        html = admin.get(f"/kegiatan/{open_act.pk}/ubah/?selesai=1").content.decode()
+        import re
+
+        end_input = re.search(r'name="end_at"[^>]*value="([^"]+)"', html)
+        assert end_input, "end_at should be prefilled with the current time"
+
+    def test_location_fields_are_selects_from_master(self, admin, data):
+        v = voyage("Navigator 2", "V2603")
+        html = admin.get(f"/voyage/{v.pk}/").content.decode()
+        assert '<select name="from_location"' in html
+        assert '<select name="to_location"' in html
+        assert 'label="Jetty"' in html  # optgroup from the master data
+        assert "Jetty baru" in html  # inline quick-add
+
+    def test_timeline_block_headers_and_bands(self, admin, data):
+        v = voyage("Navigator 1", "V2605")  # completed: one muat + one bongkar block
+        html = admin.get(f"/voyage/{v.pk}/").content.decode()
+        assert ">Kegiatan Muat (A)<" in html  # header row, not the subtotal
+        assert ">Kegiatan Bongkar (B)<" in html
+
+    def test_multi_jetty_load_gets_third_block_header(self, admin, data):
+        v = voyage("Navigator 2", "V2601")  # loads at PAM + TBSM before discharging
+        html = admin.get(f"/voyage/{v.pk}/").content.decode()
+        assert ">Kegiatan Muat (A)<" in html
+        assert ">Kegiatan Muat (B)<" in html
+        assert ">Kegiatan Bongkar (C)<" in html

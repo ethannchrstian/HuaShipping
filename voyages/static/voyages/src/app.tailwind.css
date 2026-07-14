@@ -313,6 +313,12 @@
   /* Carousel: cards outside the visible window sit dimmed + blurred */
   .korsel-redup { opacity: 0.45; filter: blur(1.5px); }
 
+  /* Timeline row that was just added: amber flash settling into its band color */
+  .baris-baru { animation: baris-baru 1.8s ease-out; }
+  @keyframes baris-baru {
+    from { background-color: #fde68a; }
+  }
+
   /* "Mulai pengaturan": brand navy fills the button from the bottom up on hover */
   .btn-isi {
     position: relative;

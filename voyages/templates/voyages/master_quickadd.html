@@ -22,11 +22,12 @@
     {% endfor %}
   </div>
   <div class="mt-3.5 flex items-center gap-2">
+    {# unset: on the detail page this panel sits inside a form that sets hx-select #}
     <button type="button" class="btn btn-primary"
             hx-post="{% url 'master_create' jenis %}?inline=1"
             hx-include="closest .quickadd-panel"
             hx-target="closest .quickadd-slot"
-            hx-swap="innerHTML">Simpan {{ label|lower }}</button>
+            hx-swap="innerHTML" hx-select="unset" hx-select-oob="unset">Simpan {{ label|lower }}</button>
     <button type="button" class="btn btn-secondary"
             onclick="this.closest('.quickadd-slot').innerHTML=''">Batal</button>
   </div>

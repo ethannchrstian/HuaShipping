@@ -139,6 +139,19 @@ ParcelFormSet = inlineformset_factory(
 )
 
 
+def _location_choices(*current):
+    """Berangkat/Tiba options from master data (kota + jetty names). Free-typed
+    values from the Excel import stay selectable so old rows survive editing."""
+    kota = sorted({p for p in Jetty.objects.values_list("port", flat=True) if p})
+    jetty = sorted(Jetty.objects.values_list("name", flat=True))
+    known = set(kota) | set(jetty)
+    choices = [("", "---------"), ("Kota", [(k, k) for k in kota]), ("Jetty", [(n, n) for n in jetty])]
+    extra = sorted({c for c in current if c and c not in known})
+    if extra:
+        choices.append(("Lainnya", [(e, e) for e in extra]))
+    return choices
+
+
 class ActivityForm(forms.ModelForm):
     class Meta:
         model = Activity
@@ -167,6 +180,11 @@ class ActivityForm(forms.ModelForm):
         self.fields["start_at"].input_formats = [DATETIME_LOCAL]
         self.fields["end_at"].input_formats = [DATETIME_LOCAL]
         self.fields["end_at"].required = False
+        # locations are picked, not typed — free text bred the Titin/Tintin twins
+        current = (self.instance.from_location, self.instance.to_location) if self.instance.pk else ()
+        loc = _location_choices(*current)
+        self.fields["from_location"].widget = forms.Select(choices=loc)
+        self.fields["to_location"].widget = forms.Select(choices=loc)
 
     def clean(self):
         cleaned = super().clean()

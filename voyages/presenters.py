@@ -91,12 +91,35 @@ def _block_subtotals(activities, acts) -> dict[int, dict]:
             pair = block_sheet_pair(block)
             out[i] = {
                 "label": f"Total Kegiatan {side} ({letters[pending]})",
+                "side": side.lower(),
                 "hari": str(pair.days),
                 "waktu": _waktu_jam(pair.time),
                 "normalized": dur_id(pair.as_timedelta()),
             }
             pending = None
     return out
+
+
+def _block_membership(acts) -> tuple[dict[int, str], dict[int, dict]]:
+    """Which derived port block each activity index belongs to: index -> side
+    ("muat"/"bongkar"), plus a header row for the index that opens each block.
+    Blocks come from the calc engine (C2), never from manual grouping."""
+    if not acts:
+        return {}, {}
+    blocks = split_port_blocks(acts)
+    letters = "ABCDEFG"
+    member: dict[int, str] = {}
+    headers: dict[int, dict] = {}
+    for idx, block in enumerate(blocks.in_order):
+        side = "muat" if block in blocks.load else "bongkar"
+        for a in block:
+            member[acts.index(a)] = side
+        headers[acts.index(block[0])] = {
+            "kind": "header",
+            "side": side,
+            "label": f"Kegiatan {'Muat' if side == 'muat' else 'Bongkar'} ({letters[idx]})",
+        }
+    return member, headers
 
 
 def timeline(voyage: Voyage) -> list[dict]:
@@ -106,8 +129,11 @@ def timeline(voyage: Voyage) -> list[dict]:
     acts = [a.to_domain() for a in activities]
     warns = {w.after_index: w for w in log_warnings(acts)}
     subtotals = _block_subtotals(activities, acts) if acts else {}
+    member, headers = _block_membership(acts)
     rows = []
     for i, a in enumerate(activities):
+        if i in headers:
+            rows.append(headers[i])
         dur = activity_duration(acts[i].start_at, acts[i].end_at)
         rows.append(
             {
@@ -117,7 +143,8 @@ def timeline(voyage: Voyage) -> list[dict]:
                 "duration": dur_id(dur) if dur is not None else "berjalan",
                 "ongoing": a.end_at is None,
                 "is_sailing": a.activity_type.is_sailing,
-                # blue tint on port work/waiting rows, like the Excel sheet
+                # band hue per derived block, like the Excel sheet's A/B sections
+                "blok": member.get(i),
                 "fill": not a.activity_type.is_sailing and a.activity_type.phase != "prep",
                 "warning": warning_text(warns[i]) if i in warns else None,
                 "warning_kind": warns[i].code if i in warns else None,

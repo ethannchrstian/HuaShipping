@@ -149,11 +149,16 @@ except OSError:
     pass  # read-only filesystem (e.g. Vercel serverless) — staticfiles collected at build time
 
 if not DEBUG:
-    # Hashed + gzipped static files served by WhiteNoise (no separate web server)
+    # Gzipped static files served by WhiteNoise (no separate web server).
+    # Use CompressedStaticFilesStorage (no manifest) for serverless compatibility.
     STORAGES = {
         'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
-        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
     }
+
+# On serverless (Vercel), collectstatic can't run — let WhiteNoise find
+# files directly from each app's static/ directory at runtime.
+WHITENOISE_USE_FINDERS = not STATIC_ROOT.exists() or not any(STATIC_ROOT.iterdir())
 
 # Auth flow (S1): no self-registration, accounts created by the admin
 LOGIN_URL = 'login'

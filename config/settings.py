@@ -143,7 +143,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATIC_ROOT.mkdir(exist_ok=True)  # quiets WhiteNoise before the first collectstatic
+try:
+    STATIC_ROOT.mkdir(exist_ok=True)  # quiets WhiteNoise before the first collectstatic
+except OSError:
+    pass  # read-only filesystem (e.g. Vercel serverless) — staticfiles collected at build time
 
 if not DEBUG:
     # Hashed + gzipped static files served by WhiteNoise (no separate web server)

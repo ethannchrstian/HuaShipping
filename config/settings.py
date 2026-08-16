@@ -28,9 +28,14 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
+# Always allow the Vercel preview/production domains
+ALLOWED_HOSTS += ['.vercel.app']
+
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
 ]
+# Trust Vercel domains for CSRF
+CSRF_TRUSTED_ORIGINS += ['https://*.vercel.app']
 
 if not DEBUG:
     # Behind the PaaS proxy: trust its TLS termination, enforce HTTPS + HSTS
